@@ -30,7 +30,7 @@ int main(void) {
   while (1) {
     for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
       _delay_ms(10);
-      OCR1A = i;
+      // OCR1A = i;
     }
   }
 }
@@ -77,13 +77,13 @@ ISR(USART_RX_vect) {
       }
       break;
     case 3:
-      value8LSB = input;
+      value8MSB = input;
       crc ^= input;
 
       byteNumber++;
       break;
     case 4:
-      value8MSB = input;
+      value8LSB = input;
       crc ^= input;
 
       byteNumber++;
@@ -104,9 +104,13 @@ ISR(USART_RX_vect) {
   }
 
   uint16_t receivedPWMDuty = (value8MSB << 8) + value8LSB;
+
   uint16_t calculatedPWMDuty = (input * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
 
-  // TODO: Fix (only 4LSB bytes are sent)
-  OCR1A = calculatedPWMDuty;  // Set TOP to calculated PWM duty.
-  UDR0 = calculatedPWMDuty;   // Send back the calculated PWM duty.
+  if (receivedPWMDuty >= MIN_DUTY && receivedPWMDuty <= MAX_DUTY) {
+    OCR1A = receivedPWMDuty;  // Set TOP to calculated PWM duty.
+  }
+
+  // TODO: Fix (only 4LSB bytes are sent) (suggestion: use - instead of +)
+  UDR0 = receivedPWMDuty;  // Send back what we got.
 }

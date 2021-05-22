@@ -1,9 +1,10 @@
 ### Frame format
 
 Example:
-`LD+${byte}${byte}#${crc}`
+`LD+${byteMSB}${byteLSB}#${crc}`
 
 where:
 
-- ${byte} - bytes
+- ${byteMSB} - left 8 bits
+- ${byteLSB} - right 8 bits
 - ${crc} - CRC
