@@ -36,5 +36,8 @@ int main(void) {
 }
 
 ISR(USART_RX_vect) {
-  // OCR1A = UDR0;  // Set PWM duty
+  // TODO: Set PWM duty
+
+  // OCR1A = UDR0;  // Just send back what we got.
+  UDR0 = UDR0;
 }
