@@ -36,8 +36,10 @@ int main(void) {
 }
 
 ISR(USART_RX_vect) {
-  // TODO: Set PWM duty
+  uint8_t inputValue = UDR0;
+  uint16_t calculated = (inputValue * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
 
-  // OCR1A = UDR0;  // Just send back what we got.
-  UDR0 = UDR0;
+  // TODO: Fix (only 4LSB bytes are sent)
+  OCR1A = calculated;  // Set TOP to calculated PWM duty.
+  UDR0 = calculated;   // Send back the calculated PWM duty.
 }
