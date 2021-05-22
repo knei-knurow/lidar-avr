@@ -1,0 +1,12 @@
+.DS_Store
+.vscode/
+.idea/
+*.a
+*.o
+*.out
+*.exe
+*.elf
+*.hex
+.vs/
+Debug/
+*.componentinfo.xml
