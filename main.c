@@ -12,7 +12,7 @@ int main(void) {
   TCCR1A |= (1 << COM1A1);  // Set non-inverting mode.
   DDRB |= (1 << PB1);       // Set DDRB to be output (we use it for OC2 pin for
                             // compare registers later).
-  OCR1A = MAX_DUTY;         // Set PWM duty.
+  OCR1A = MIN_DUTY;         // Set PWM duty.
   ICR1 = 39999;  // Set PWM period and prescaler (period = 20ms; prescaler = 8).
   TCCR1B |= (1 << CS11);
 
@@ -28,9 +28,13 @@ int main(void) {
   sei();  // Enable global interrupts
 
   while (1) {
+    for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
+      _delay_ms(10);
+      OCR1A = i;
+    }
   }
 }
 
 ISR(USART_RX_vect) {
-  OCR1A = UDR0;  // Set PWM duty
+  // OCR1A = UDR0;  // Set PWM duty
 }
