@@ -36,10 +36,77 @@ int main(void) {
 }
 
 ISR(USART_RX_vect) {
-  uint8_t inputValue = UDR0;
-  uint16_t calculated = (inputValue * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
+  static uint8_t byteNumber = 0;
+  static uint8_t value8LSB = 0;
+  static uint8_t value8MSB = 0;
+
+  static uint8_t crc = 0;
+
+  uint8_t input = UDR0;
+
+  switch (byteNumber) {
+    case 0:
+      if (input == 'L') {
+        crc = input;
+
+        byteNumber++;
+      } else {
+        // handle error gracefully
+        byteNumber = 0;
+        break;
+      }
+      break;
+    case 1:
+      if (input == 'D') {
+        crc ^= input;
+
+        byteNumber++;
+      } else {
+        // handle error gracefully
+        byteNumber = 0;
+      }
+      break;
+    case 2:
+      if (input == '+') {
+        crc ^= input;
+
+        byteNumber++;
+      } else {
+        // handle error gracefully
+        byteNumber = 0;
+      }
+      break;
+    case 3:
+      value8LSB = input;
+      crc ^= input;
+
+      byteNumber++;
+      break;
+    case 4:
+      value8MSB = input;
+      crc ^= input;
+
+      byteNumber++;
+      break;
+    case 5:
+      if (input == '#') {
+        byteNumber++;
+        crc ^= input;
+      }
+      break;
+    case 6:
+      if (input == crc) {
+        // OK
+        byteNumber = 0;
+        crc = 0;
+      }
+      break;
+  }
+
+  uint16_t receivedPWMDuty = (value8MSB << 8) + value8LSB;
+  uint16_t calculatedPWMDuty = (input * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
 
   // TODO: Fix (only 4LSB bytes are sent)
-  OCR1A = calculated;  // Set TOP to calculated PWM duty.
-  UDR0 = calculated;   // Send back the calculated PWM duty.
+  OCR1A = calculatedPWMDuty;  // Set TOP to calculated PWM duty.
+  UDR0 = calculatedPWMDuty;   // Send back the calculated PWM duty.
 }
