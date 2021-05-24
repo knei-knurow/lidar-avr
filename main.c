@@ -117,6 +117,6 @@ ISR(USART_RX_vect) {
     OCR1A = receivedPWMDuty;  // Set TOP to calculated PWM duty.
   }
 
-  // TODO: Fix (only 4LSB bytes are sent) (suggestion: use - instead of +)
+  // TODO: Fix (only 8LSB bytes are sent)
   UDR0 = receivedPWMDuty;  // Send back what we got.
 }
