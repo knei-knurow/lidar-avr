@@ -4,10 +4,11 @@
         August 2014
 */
 
-#include "mpu6050.h"
 #include <inttypes.h>
 #include <stdint.h>
+
 #include "i2c.h"
+#include "mpu6050.h"
 #include "mpu6050_reg.h"
 
 // start mpu6050 over I2C

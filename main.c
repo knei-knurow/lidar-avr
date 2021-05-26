@@ -10,44 +10,15 @@
 #include <util/delay.h>
 
 #include "mpu6050/mpu6050.h"
+#include "usart/usart.h"
 
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
 
 #define FRAME_LENGTH 17
 
-// Initializes the LED.
-void led_init() {
-  DDRB = DDRB | (1 << PB5);
-}
-
-// ??? just szym things
-void led_blink(unsigned time) {
-  static unsigned cnt = 0;
-  if (cnt == 0) {
-    PORTB ^= (1 << PB5);  // Debug LED blink
-  }
-  cnt = (cnt + 1) % time;
-}
-
-// Waits until the USART transmit buffer is empty, then sends the byte.
-void usart_write_byte(uint8_t byte) {
-  // Wait until transmit buffer is empty
-  while (!(UCSR0A & (1 << UDRE0))) {
-  };
-
-  UDR0 = byte;
-}
-
-// Writes frame byte-by-byte to USART.
-void usart_write_acc_frame(uint8_t* frame, int frame_length) {
-  for (int i = 0; i < frame_length; i++) {
-    usart_write_byte(frame[i]);
-  }
-}
-
 // Initializes the accelerometer.
-void acc_init() {
+void acc_init(void) {
   mpu6050_start();
 }
 
@@ -93,18 +64,20 @@ int main(void) {
 
   sei();  // Enable global interrupts
 
-  led_init();
+  DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
 
   uint8_t frame[FRAME_LENGTH];
   while (1) {
-    for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
-      _delay_ms(10);
+    for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
+      _delay_ms(25);
 
-      usart_write_acc_frame(frame, FRAME_LENGTH);
+      usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer input to USART
 
-      OCR1A = i;
+      OCR1A = duty;  // Set PWM TOP to duty
 
-      led_blink(50);
+      if (duty % 50 == 0) {
+        PORTB ^= (1 << PB5);  // Blink on-board LED to help with debugging
+      }
     }
   }
 }

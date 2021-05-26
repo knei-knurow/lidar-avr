@@ -8,6 +8,8 @@
         useful functions to manipulate mpu6050
 */
 
+#include <stdint.h>
+
 #ifndef MPU6050
 #define MPU6050
 
