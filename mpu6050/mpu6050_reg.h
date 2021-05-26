@@ -1,4 +1,10 @@
 /*
+        https://github.com/YifanJiangPolyU/MPU6050
+        Jiang Yifan
+        August 2014
+*/
+
+/*
         define mpu6050 register addresses here
 */
 #ifndef MPU6050_REG
