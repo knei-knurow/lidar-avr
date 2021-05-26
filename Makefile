@@ -5,7 +5,7 @@ main.hex: main.elf
 	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
 
 main.elf: main.c
-	avr-gcc -mmcu=atmega328p -Wall -Os -o main.elf main.c -DF_CPU=16000000UL
+	avr-gcc -mmcu=atmega328p -Wall -Os -o main.elf main.c i2cmaster.c mpu6050.c -DF_CPU=16000000UL
 
 clean:
 	rm -rf *.hex *.elf *.o

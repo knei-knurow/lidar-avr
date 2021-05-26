@@ -9,8 +9,15 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+#include "mpu6050.h"
+
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
+
+void accelerometer_debug() {
+  uint8_t r = mpu6050_testConnection();
+  UDR0 = r;
+}
 
 int main(void) {
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
@@ -31,9 +38,14 @@ int main(void) {
 
   sei();  // Enable global interrupts
 
+  // mpu6050_init();  // Init the accelerometer
+
   while (1) {
     for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
       _delay_ms(10);
+
+      accelerometer_debug();
+
       // OCR1A = i;
     }
   }
