@@ -16,37 +16,62 @@
 
 #define FRAME_LENGTH 17
 
+// Initializes the LED.
 void led_init() {
   DDRB = DDRB | (1 << PB5);
 }
 
+// ??? just szym things
 void led_blink(unsigned time) {
   static unsigned cnt = 0;
   if (cnt == 0) {
-    PORTB = PORTB ^ (1 << PB5);  // Debug LED blink
+    PORTB ^= (1 << PB5);  // Debug LED blink
   }
   cnt = (cnt + 1) % time;
 }
 
+// Waits until the USART transmit buffer is empty, then sends the byte.
 void usart_write_byte(uint8_t byte) {
-  // Wait for empty transmit buffer.
+  // Wait until transmit buffer is empty
   while (!(UCSR0A & (1 << UDRE0))) {
   };
-  // UCSR0A = USART Control and Status Register 0 A.
-  // UDRE0 = USART Data Register Empty 0.
 
   UDR0 = byte;
-  // UDR0 = USART Data Register 0.
 }
 
-void acc_init() {
-  mpu6050_start();
-}
-
+// Writes frame byte-by-byte to USART.
 void usart_write_acc_frame(uint8_t* frame, int frame_length) {
   for (int i = 0; i < frame_length; i++) {
     usart_write_byte(frame[i]);
   }
+}
+
+// Initializes the accelerometer.
+void acc_init() {
+  mpu6050_start();
+}
+
+// Creates a frame with latest data from the accelerometer and writes
+// it to buffer.
+//
+// Buffer must be of length FRAME_LENGTH.
+void acc_create_frame(uint8_t* buffer) {
+  buffer[0] = 'L';
+  buffer[1] = 'D';
+  buffer[2] = '-';
+
+  /*
+  // Doesn't work on Bartek's setup for some reason
+  mpu6050_read_gyro_X(3 + buffer + 0);
+  mpu6050_read_gyro_Y(3 + buffer + 2);
+  mpu6050_read_gyro_Z(3 + buffer + 4);
+  mpu6050_read_accel_X(3 + buffer + 6);
+  mpu6050_read_accel_Y(3 + buffer + 8);
+  mpu6050_read_accel_Z(3 + buffer + 10);
+  */
+
+  buffer[15] = 0xA;
+  buffer[16] = 0xD;
 }
 
 int main(void) {
@@ -63,8 +88,8 @@ int main(void) {
   UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);  // Set USART frame to be 8 bits
   UCSR0B |= (1 << RXCIE0);  // Enable interrupt to fire when USART receives data receives data
 
-  // DDRB = Data Direction Register for port B.
-  // Setting PIN5 on PORTB to 1. 1 means it is an output pin.
+  // DDRB = Data Direction Register for port B
+  // Setting PIN5 on PORTB to 1. 1 means it is an output pin
 
   sei();  // Enable global interrupts
 
@@ -75,21 +100,7 @@ int main(void) {
     for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
       _delay_ms(10);
 
-      frame[0] = 'L';
-      frame[1] = 'D';
-      frame[2] = '-';
-      mpu6050_read_gyro_X(3 + frame + 0);
-      mpu6050_read_gyro_Y(3 + frame + 2);
-      mpu6050_read_gyro_Z(3 + frame + 4);
-      mpu6050_read_accel_X(3 + frame + 6);
-      mpu6050_read_accel_Y(3 + frame + 8);
-      mpu6050_read_accel_Z(3 + frame + 10);
-      frame[15] = 0xA;
-      frame[16] = 0xD;
-
       usart_write_acc_frame(frame, FRAME_LENGTH);
-
-      // UDR0 = v[0]; it was here before - delete in the future
 
       OCR1A = i;
 
@@ -173,9 +184,6 @@ ISR(USART_RX_vect) {
   uint16_t calculatedPWMDuty = (input * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
 
   if (receivedPWMDuty >= MIN_DUTY && receivedPWMDuty <= MAX_DUTY) {
-    OCR1A = receivedPWMDuty;  // Set TOP to calculated PWM duty.
+    OCR1A = receivedPWMDuty;  // Set PWM TOP to received PWM duty
   }
-
-  // TODO: Fix (only 8LSB bytes are sent)
-  // UDR0 = receivedPWMDuty;  // Send back what we got.
 }
