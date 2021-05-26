@@ -14,6 +14,12 @@
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
 
+#define FRAME_LENGTH 17
+
+void led_init() {
+  DDRB = DDRB | (1 << PB5);
+}
+
 void led_blink(unsigned time) {
   static unsigned cnt = 0;
   if (cnt == 0) {
@@ -22,10 +28,28 @@ void led_blink(unsigned time) {
   cnt = (cnt + 1) % time;
 }
 
-int main(void) {
-  // Set built-in LED
-  DDRB = DDRB | (1 << PB5);
+void usart_write_byte(uint8_t byte) {
+  // Wait for empty transmit buffer.
+  while (!(UCSR0A & (1 << UDRE0))) {
+  };
+  // UCSR0A = USART Control and Status Register 0 A.
+  // UDRE0 = USART Data Register Empty 0.
 
+  UDR0 = byte;
+  // UDR0 = USART Data Register 0.
+}
+
+void acc_init() {
+  mpu6050_start();
+}
+
+void usart_write_acc_frame(uint8_t* frame, int frame_length) {
+  for (int i = 0; i < frame_length; i++) {
+    usart_write_byte(frame[i]);
+  }
+}
+
+int main(void) {
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
   TCCR1B |= (1 << WGM12) | (1 << WGM13);  // Set Fast-PWM mode 2/2
   TCCR1A |= (1 << COM1A1);                // Set non-inverting PWM mode
@@ -44,15 +68,28 @@ int main(void) {
 
   sei();  // Enable global interrupts
 
-  uint8_t r = mpu6050_start();
+  led_init();
 
-  uint8_t* v = malloc(2 * sizeof(uint8_t));
+  uint8_t frame[FRAME_LENGTH];
   while (1) {
     for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
       _delay_ms(10);
 
-      mpu6050_read_accel_Z(&v);
-      UDR0 = v[0];
+      frame[0] = 'L';
+      frame[1] = 'D';
+      frame[2] = '-';
+      mpu6050_read_gyro_X(3 + frame + 0);
+      mpu6050_read_gyro_Y(3 + frame + 2);
+      mpu6050_read_gyro_Z(3 + frame + 4);
+      mpu6050_read_accel_X(3 + frame + 6);
+      mpu6050_read_accel_Y(3 + frame + 8);
+      mpu6050_read_accel_Z(3 + frame + 10);
+      frame[15] = 0xA;
+      frame[16] = 0xD;
+
+      usart_write_acc_frame(frame, FRAME_LENGTH);
+
+      // UDR0 = v[0]; it was here before - delete in the future
 
       OCR1A = i;
 
