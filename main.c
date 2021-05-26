@@ -9,8 +9,34 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+#include "mpu6050/mpu6050.h"
+#include "usart/usart.h"
+
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
+
+#define FRAME_LENGTH 17
+
+// Creates a frame with latest data from the accelerometer and writes
+// it to buffer.
+//
+// Buffer must be of length FRAME_LENGTH.
+void acc_create_frame(uint8_t* buffer) {
+  buffer[0] = 'L';
+  buffer[1] = 'D';
+  buffer[2] = '-';
+
+  // Doesn't work on Bartek's setup for some reason
+  mpu6050_read_gyro_X(3 + buffer + 0);
+  mpu6050_read_gyro_Y(3 + buffer + 2);
+  mpu6050_read_gyro_Z(3 + buffer + 4);
+  mpu6050_read_accel_X(3 + buffer + 6);
+  mpu6050_read_accel_Y(3 + buffer + 8);
+  mpu6050_read_accel_Z(3 + buffer + 10);
+
+  buffer[15] = 0xA;
+  buffer[16] = 0xD;
+}
 
 int main(void) {
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
@@ -22,19 +48,32 @@ int main(void) {
   TCCR1B |= (1 << CS11);
 
   UBRR0 = 103;                              // Set USART baudrate to 9600 bps
-  UCSR0B |= (1 << RXEN0) | (1 << TXEN0);    // Enable USART receiver
+  UCSR0B |= (1 << RXEN0) | (1 << TXEN0);    // Enable USART receiver and transmitter
   UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);  // Set USART frame to be 8 bits
   UCSR0B |= (1 << RXCIE0);  // Enable interrupt to fire when USART receives data receives data
 
-  // DDRB = Data Direction Register for port B.
-  // Setting PIN5 on PORTB to 1. 1 means it is an output pin.
+  // DDRB = Data Direction Register for port B
+  // Setting PIN5 on PORTB to 1. 1 means it is an output pin
 
   sei();  // Enable global interrupts
 
+  DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
+
+  mpu6050_start();
+
+  uint8_t frame[FRAME_LENGTH];
   while (1) {
-    for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
-      _delay_ms(10);
-      // OCR1A = i;
+    for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
+      _delay_ms(25);
+
+      acc_create_frame(frame);
+      usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer input to USART
+
+      OCR1A = duty;  // Set PWM TOP to duty
+
+      if (duty % 50 == 0) {
+        PORTB ^= (1 << PB5);  // Blink on-board LED to help with debugging
+      }
     }
   }
 }
@@ -114,9 +153,6 @@ ISR(USART_RX_vect) {
   uint16_t calculatedPWMDuty = (input * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
 
   if (receivedPWMDuty >= MIN_DUTY && receivedPWMDuty <= MAX_DUTY) {
-    OCR1A = receivedPWMDuty;  // Set TOP to calculated PWM duty.
+    OCR1A = receivedPWMDuty;  // Set PWM TOP to received PWM duty
   }
-
-  // TODO: Fix (only 8LSB bytes are sent)
-  UDR0 = receivedPWMDuty;  // Send back what we got.
 }
