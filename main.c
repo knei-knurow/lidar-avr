@@ -14,7 +14,18 @@
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
 
+void led_blink(unsigned time) {
+  static unsigned cnt = 0;
+  if (cnt == 0) {
+    PORTB = PORTB ^ (1 << PB5);  // Debug LED blink
+  }
+  cnt = (cnt + 1) % time;
+}
+
 int main(void) {
+  // Set built-in LED
+  DDRB = DDRB | (1 << PB5);
+
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
   TCCR1B |= (1 << WGM12) | (1 << WGM13);  // Set Fast-PWM mode 2/2
   TCCR1A |= (1 << COM1A1);                // Set non-inverting PWM mode
@@ -35,13 +46,17 @@ int main(void) {
 
   uint8_t r = mpu6050_start();
 
+  uint8_t* v = malloc(2 * sizeof(uint8_t));
   while (1) {
     for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
       _delay_ms(10);
 
-      UDR0 = 255;
+      mpu6050_read_accel_Z(&v);
+      UDR0 = v[0];
 
       OCR1A = i;
+
+      led_blink(50);
     }
   }
 }
