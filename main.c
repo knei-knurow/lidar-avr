@@ -26,18 +26,30 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[1] = 'D';
   buffer[2] = '-';
 
-  // mpu6050_read_gyro_X(3 + buffer + 0);
-  // mpu6050_read_gyro_Y(3 + buffer + 2);
-  // mpu6050_read_gyro_Z(3 + buffer + 4);
-  // mpu6050_read_accel_X(3 + buffer + 6);
-  // mpu6050_read_accel_Y(3 + buffer + 8);
-  // mpu6050_read_accel_Z(3 + buffer + 10);
+  // The following lines are copied from mpu6050_getRawData(...) function.
+  uint8_t acc_buffer[14];  // Buffer for gyroscope (8B), empty space (2B) and accelerometer (8B)
+  mpu6050_readBytes(MPU6050_RA_ACCEL_XOUT_H, 14,
+                    acc_buffer);  // Fill the gyroscope and accelerometer buffer
 
-  buffer[15] = 0xA;
-  buffer[16] = 0xD;
+  buffer[3] = acc_buffer[0];    // accel X (high)
+  buffer[4] = acc_buffer[1];    // accel X (low)
+  buffer[5] = acc_buffer[2];    // accel Y (high)
+  buffer[6] = acc_buffer[3];    // accel Y (low)
+  buffer[7] = acc_buffer[4];    // accel Z (high)
+  buffer[8] = acc_buffer[5];    // accel Z (low)
+  buffer[9] = acc_buffer[6];    // gyro X (high)
+  buffer[10] = acc_buffer[7];   // gyro X (low)
+  buffer[11] = acc_buffer[8];   // gyro Y (high)
+  buffer[12] = acc_buffer[9];   // gyro Y (low)
+  buffer[13] = acc_buffer[10];  // gyro Z (high)
+  buffer[14] = acc_buffer[11];  // gyro Z (low)
+
+  buffer[15] = '#';
+  buffer[16] = 'S';  // TODO: CNC checksum
 }
 
 int main(void) {
+  // PWM
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
   TCCR1B |= (1 << WGM12) | (1 << WGM13);  // Set Fast-PWM mode 2/2
   TCCR1A |= (1 << COM1A1);                // Set non-inverting PWM mode
@@ -46,6 +58,7 @@ int main(void) {
   ICR1 = 39999;  // Set PWM period and prescaler (period = 20ms; prescaler = 8)
   TCCR1B |= (1 << CS11);
 
+  // USART
   UBRR0 = 103;                              // Set USART baudrate to 9600 bps
   UCSR0B |= (1 << RXEN0) | (1 << TXEN0);    // Enable USART receiver and transmitter
   UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);  // Set USART frame to be 8 bits
@@ -54,17 +67,25 @@ int main(void) {
   // DDRB = Data Direction Register for port B
   // Setting PIN5 on PORTB to 1. 1 means it is an output pin
 
+  // Interrupts
   sei();  // Enable global interrupts
 
+  // LED
   DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
+
+  // Accelerometer MPU6050
+  uint8_t acc_test = mpu6050_testConnection();
+  mpu6050_init();
+
+  mpu6050_init();
 
   uint8_t frame[FRAME_LENGTH];
   while (1) {
     for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
       _delay_ms(25);
 
-      acc_create_frame(frame);
-      usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer input to USART
+      acc_create_frame(frame);                 // Create a frame with accelerometer output
+      usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
 
       OCR1A = duty;  // Set PWM TOP to duty
 
