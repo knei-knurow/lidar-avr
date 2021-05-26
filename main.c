@@ -14,8 +14,6 @@
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
 
-void accelerometer_debug() {}
-
 int main(void) {
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
   TCCR1B |= (1 << WGM12) | (1 << WGM13);  // Set Fast-PWM mode 2/2
@@ -26,7 +24,7 @@ int main(void) {
   TCCR1B |= (1 << CS11);
 
   UBRR0 = 103;                              // Set USART baudrate to 9600 bps
-  UCSR0B |= (1 << RXEN0) | (1 << TXEN0);    // Enable USART receiver
+  UCSR0B |= (1 << RXEN0) | (1 << TXEN0);    // Enable USART receiver and transmitter
   UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);  // Set USART frame to be 8 bits
   UCSR0B |= (1 << RXCIE0);  // Enable interrupt to fire when USART receives data receives data
 
@@ -35,15 +33,15 @@ int main(void) {
 
   sei();  // Enable global interrupts
 
-  // mpu6050_init();  // Init the accelerometer
+  uint8_t r = mpu6050_start();
 
   while (1) {
     for (int i = MIN_DUTY; i <= MAX_DUTY; i++) {
       _delay_ms(10);
 
-      accelerometer_debug();
+      UDR0 = 255;
 
-      // OCR1A = i;
+      OCR1A = i;
     }
   }
 }
@@ -127,5 +125,5 @@ ISR(USART_RX_vect) {
   }
 
   // TODO: Fix (only 8LSB bytes are sent)
-  UDR0 = receivedPWMDuty;  // Send back what we got.
+  // UDR0 = receivedPWMDuty;  // Send back what we got.
 }
