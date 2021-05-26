@@ -59,7 +59,8 @@ int main(void) {
 
   DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
 
-  mpu6050_start();
+  mpu6050_init();
+  mpu6050_start();  // Works even without mpu6050_start (sometimes?)
 
   uint8_t frame[FRAME_LENGTH];
   while (1) {
