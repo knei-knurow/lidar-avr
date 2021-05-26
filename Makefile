@@ -14,13 +14,6 @@ main.hex: main.elf
 main.elf: main.o usart.o mpu6050.o i2c.o
 	$(CC) $(CFLAGS) -Os -o main.elf main.o usart.o mpu6050.o i2c.o -DF_CPU=16000000UL
 
-# all: main.o usart.o mpu6050.o i2c.o
-# 	$(CC) $(CFLAGs) --output main.elf \
-# 	main.o \
-# 	usart.o \
-# 	mpu6050.o \
-# 	i2c.o
-
 main.o: main.c
 	$(CC) $(CFLAGS) -Os -c main.c -DF_CPU=16000000UL $(INCLUDES)
 
