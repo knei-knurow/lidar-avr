@@ -17,11 +17,6 @@
 
 #define FRAME_LENGTH 17
 
-// Initializes the accelerometer.
-void acc_init(void) {
-  mpu6050_start();
-}
-
 // Creates a frame with latest data from the accelerometer and writes
 // it to buffer.
 //
@@ -31,7 +26,6 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[1] = 'D';
   buffer[2] = '-';
 
-  /*
   // Doesn't work on Bartek's setup for some reason
   mpu6050_read_gyro_X(3 + buffer + 0);
   mpu6050_read_gyro_Y(3 + buffer + 2);
@@ -39,7 +33,6 @@ void acc_create_frame(uint8_t* buffer) {
   mpu6050_read_accel_X(3 + buffer + 6);
   mpu6050_read_accel_Y(3 + buffer + 8);
   mpu6050_read_accel_Z(3 + buffer + 10);
-  */
 
   buffer[15] = 0xA;
   buffer[16] = 0xD;
@@ -66,11 +59,14 @@ int main(void) {
 
   DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
 
+  mpu6050_start();
+
   uint8_t frame[FRAME_LENGTH];
   while (1) {
     for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
       _delay_ms(25);
 
+      acc_create_frame(frame);
       usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer input to USART
 
       OCR1A = duty;  // Set PWM TOP to duty
