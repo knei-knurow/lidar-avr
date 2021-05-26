@@ -26,13 +26,12 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[1] = 'D';
   buffer[2] = '-';
 
-  // Doesn't work on Bartek's setup for some reason
-  mpu6050_read_gyro_X(3 + buffer + 0);
-  mpu6050_read_gyro_Y(3 + buffer + 2);
-  mpu6050_read_gyro_Z(3 + buffer + 4);
-  mpu6050_read_accel_X(3 + buffer + 6);
-  mpu6050_read_accel_Y(3 + buffer + 8);
-  mpu6050_read_accel_Z(3 + buffer + 10);
+  // mpu6050_read_gyro_X(3 + buffer + 0);
+  // mpu6050_read_gyro_Y(3 + buffer + 2);
+  // mpu6050_read_gyro_Z(3 + buffer + 4);
+  // mpu6050_read_accel_X(3 + buffer + 6);
+  // mpu6050_read_accel_Y(3 + buffer + 8);
+  // mpu6050_read_accel_Z(3 + buffer + 10);
 
   buffer[15] = 0xA;
   buffer[16] = 0xD;
@@ -58,9 +57,6 @@ int main(void) {
   sei();  // Enable global interrupts
 
   DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
-
-  mpu6050_init();
-  mpu6050_start();  // Works even without mpu6050_start (sometimes?)
 
   uint8_t frame[FRAME_LENGTH];
   while (1) {
