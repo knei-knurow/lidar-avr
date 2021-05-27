@@ -1,7 +1,3 @@
-/*
-        https://github.com/YifanJiangPolyU/MPU6050
-*/
-
 #ifndef _I2CMASTER_H
 #define _I2CMASTER_H 1
 /*************************************************************************
@@ -13,6 +9,10 @@
  * Target:   any AVR device
  * Usage:    see Doxygen manual
  **************************************************************************/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef DOXYGEN
 /**
@@ -138,7 +138,7 @@ extern unsigned char i2c_rep_start(unsigned char addr);
  @param    addr address and transfer direction of I2C device
  @return   none
  */
-extern void i2c_start_wait(unsigned char addr);
+extern uint8_t i2c_start_wait(unsigned char addr);
 
 /**
  @brief Send one byte to I2C device
@@ -170,20 +170,11 @@ extern unsigned char i2c_readNak(void);
  @return   byte read from I2C device
  */
 extern unsigned char i2c_read(unsigned char ack);
-
-/*////////////
- Functions that I added
-////////////*/
-
-void i2c_read_byte(uint8_t dev_addr, uint8_t reg_addr, uint8_t* data);
-
-void i2c_write_byte(uint8_t dev_addr, uint8_t reg_addr, uint8_t data);
-
-void i2c_read_bytes(uint8_t dev_addr, uint8_t first_reg_addr, uint8_t length, uint8_t* data);
-
-void i2c_write_bytes(uint8_t dev_addr, uint8_t reg_addr, uint8_t length, uint8_t* data);
-
 #define i2c_read(ack) (ack) ? i2c_readAck() : i2c_readNak();
+
+#ifdef __cplusplus
+}
+#endif
 
 /**@}*/
 #endif
