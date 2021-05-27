@@ -27,9 +27,8 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[2] = '-';
 
   // The following lines are copied from mpu6050_getRawData(...) function.
-  uint8_t acc_buffer[14];  // Buffer for gyroscope (8B), empty space (2B) and accelerometer (8B)
-  mpu6050_readBytes(MPU6050_RA_ACCEL_XOUT_H, 14,
-                    acc_buffer);  // Fill the gyroscope and accelerometer buffer
+  uint8_t acc_buffer[14];  // Buffer for gyroscope (8B), temperature (2B) and accelerometer (8B)
+  mpu6050_readBytes(MPU6050_RA_ACCEL_XOUT_H, 14, acc_buffer);  // Fill the acc_buffer
 
   buffer[3] = acc_buffer[0];    // accel X (high)
   buffer[4] = acc_buffer[1];    // accel X (low)
@@ -37,12 +36,12 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[6] = acc_buffer[3];    // accel Y (low)
   buffer[7] = acc_buffer[4];    // accel Z (high)
   buffer[8] = acc_buffer[5];    // accel Z (low)
-  buffer[9] = acc_buffer[6];    // gyro X (high)
-  buffer[10] = acc_buffer[7];   // gyro X (low)
-  buffer[11] = acc_buffer[8];   // gyro Y (high)
-  buffer[12] = acc_buffer[9];   // gyro Y (low)
-  buffer[13] = acc_buffer[10];  // gyro Z (high)
-  buffer[14] = acc_buffer[11];  // gyro Z (low)
+  buffer[9] = acc_buffer[8];    // gyro X (high)
+  buffer[10] = acc_buffer[9];   // gyro X (low)
+  buffer[11] = acc_buffer[10];  // gyro Y (high)
+  buffer[12] = acc_buffer[11];  // gyro Y (low)
+  buffer[13] = acc_buffer[12];  // gyro Z (high)
+  buffer[14] = acc_buffer[13];  // gyro Z (low)
 
   buffer[15] = '#';
   buffer[16] = 'S';  // TODO: CNC checksum
