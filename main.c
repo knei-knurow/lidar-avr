@@ -76,8 +76,6 @@ int main(void) {
   uint8_t acc_test = mpu6050_testConnection();
   mpu6050_init();
 
-  mpu6050_init();
-
   uint8_t frame[FRAME_LENGTH];
   while (1) {
     for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
