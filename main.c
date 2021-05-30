@@ -44,7 +44,7 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[14] = acc_buffer[13];  // gyro Z (low)
 
   buffer[15] = '#';
-  buffer[16] = 'S';  // TODO: CNC checksum
+  buffer[16] = 'S';  // TODO: checksum
 }
 
 int main(void) {
@@ -79,7 +79,7 @@ int main(void) {
   uint8_t frame[FRAME_LENGTH];
   while (1) {
     for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
-      _delay_ms(25);
+      // _delay_ms(25);
 
       acc_create_frame(frame);                 // Create a frame with accelerometer output
       usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
