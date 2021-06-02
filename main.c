@@ -17,6 +17,17 @@
 
 #define FRAME_LENGTH 17
 
+// Calculates checksum
+uint8_t calculate_checksum(uint8_t* buffer, unsigned size) {
+  if (size == 0)
+    return 0;
+  uint8_t checksum = buffer[0];
+  for (unsigned i = 1; i < size; i++) {
+    checksum ^= buffer[i];
+  }
+  return checksum;
+}
+
 // Creates a frame with latest data from the accelerometer and writes
 // it to buffer.
 //
@@ -24,7 +35,7 @@
 void acc_create_frame(uint8_t* buffer) {
   buffer[0] = 'L';
   buffer[1] = 'D';
-  buffer[2] = '-';
+  buffer[2] = 12;  // data part length
 
   // The following lines are copied from mpu6050_getRawData(...) function.
   uint8_t acc_buffer[14];  // Buffer for gyroscope (8B), temperature (2B) and accelerometer (8B)
@@ -44,7 +55,7 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[14] = acc_buffer[13];  // gyro Z (low)
 
   buffer[15] = '#';
-  buffer[16] = 'S';  // TODO: checksum
+  buffer[16] = calculate_checksum(buffer, FRAME_LENGTH - 1);
 }
 
 int main(void) {
