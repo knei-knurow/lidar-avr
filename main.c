@@ -15,7 +15,7 @@
 #define MIN_DUTY 1600
 #define MAX_DUTY 4400
 
-#define FRAME_LENGTH 17
+#define FRAME_LENGTH 18
 
 // Calculates checksum
 uint8_t calculate_checksum(uint8_t* buffer, unsigned size) {
@@ -36,26 +36,27 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[0] = 'L';
   buffer[1] = 'D';
   buffer[2] = 12;  // data part length
+  buffer[3] = '+';
 
   // The following lines are copied from mpu6050_getRawData(...) function.
   uint8_t acc_buffer[14];  // Buffer for gyroscope (8B), temperature (2B) and accelerometer (8B)
   mpu6050_readBytes(MPU6050_RA_ACCEL_XOUT_H, 14, acc_buffer);  // Fill the acc_buffer
 
-  buffer[3] = acc_buffer[0];    // accel X (high)
-  buffer[4] = acc_buffer[1];    // accel X (low)
-  buffer[5] = acc_buffer[2];    // accel Y (high)
-  buffer[6] = acc_buffer[3];    // accel Y (low)
-  buffer[7] = acc_buffer[4];    // accel Z (high)
-  buffer[8] = acc_buffer[5];    // accel Z (low)
-  buffer[9] = acc_buffer[8];    // gyro X (high)
-  buffer[10] = acc_buffer[9];   // gyro X (low)
-  buffer[11] = acc_buffer[10];  // gyro Y (high)
-  buffer[12] = acc_buffer[11];  // gyro Y (low)
-  buffer[13] = acc_buffer[12];  // gyro Z (high)
-  buffer[14] = acc_buffer[13];  // gyro Z (low)
+  buffer[4] = acc_buffer[0];    // accel X (high)
+  buffer[5] = acc_buffer[1];    // accel X (low)
+  buffer[6] = acc_buffer[2];    // accel Y (high)
+  buffer[7] = acc_buffer[3];    // accel Y (low)
+  buffer[8] = acc_buffer[4];    // accel Z (high)
+  buffer[9] = acc_buffer[5];    // accel Z (low)
+  buffer[10] = acc_buffer[8];   // gyro X (high)
+  buffer[11] = acc_buffer[9];   // gyro X (low)
+  buffer[12] = acc_buffer[10];  // gyro Y (high)
+  buffer[13] = acc_buffer[11];  // gyro Y (low)
+  buffer[14] = acc_buffer[12];  // gyro Z (high)
+  buffer[15] = acc_buffer[13];  // gyro Z (low)
 
-  buffer[15] = '#';
-  buffer[16] = calculate_checksum(buffer, FRAME_LENGTH - 1);
+  buffer[16] = '#';
+  buffer[17] = calculate_checksum(buffer, FRAME_LENGTH - 1);
 }
 
 int main(void) {
