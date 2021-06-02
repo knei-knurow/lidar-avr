@@ -70,7 +70,7 @@ int main(void) {
   TCCR1B |= (1 << CS11);
 
   // USART
-  UBRR0 = 103;                              // Set USART baudrate to 9600 bps
+  UBRR0 = 51;                               // Set USART baudrate to 19200 bps
   UCSR0B |= (1 << RXEN0) | (1 << TXEN0);    // Enable USART receiver and transmitter
   UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);  // Set USART frame to be 8 bits
   UCSR0B |= (1 << RXCIE0);  // Enable interrupt to fire when USART receives data receives data
