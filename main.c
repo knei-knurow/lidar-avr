@@ -14,6 +14,7 @@
 
 #define MIN_DUTY 1000  // is too low for testing purposed
 #define MAX_DUTY 4400
+#define START_DUTY ((MAX_DUTY - MIN_DUTY) / 2 + MIN_DUTY)
 
 #define FRAME_LENGTH 18
 #define FRAME_SERVO_LEN 8
@@ -66,7 +67,7 @@ int main(void) {
   TCCR1B |= (1 << WGM12) | (1 << WGM13);  // Set Fast-PWM mode 2/2
   TCCR1A |= (1 << COM1A1);                // Set non-inverting PWM mode
   DDRB |= (1 << PB1);                     // Set PORTB1 to be output (we use later for OCR1A pin )
-  OCR1A = MIN_DUTY;                       // Set PWM duty
+  OCR1A = START_DUTY;                     // Set PWM duty
   ICR1 = 39999;  // Set PWM period and prescaler (period = 20ms; prescaler = 8)
   TCCR1B |= (1 << CS11);
 
@@ -92,8 +93,8 @@ int main(void) {
   int led_count = 0;
   uint8_t frame[FRAME_LENGTH];
   while (1) {
-    // acc_create_frame(frame);                 // Create a frame with accelerometer output
-    // usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
+    acc_create_frame(frame);                 // Create a frame with accelerometer output
+    usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
 
     if (led_count++ % 50 == 0) {
       PORTB ^= (1 << PB5);
@@ -132,7 +133,7 @@ ISR(USART_RX_vect) {
 
     uint16_t pwm = (frame[4] << 8) + frame[5];
 
-    usart_write_byte(pwm / 100);
+    // usart_write_byte(pwm / 100);
 
     if (pwm >= MIN_DUTY && pwm <= MAX_DUTY) {
       OCR1A = pwm;  // Set PWM TOP to received PWM duty
