@@ -88,19 +88,14 @@ int main(void) {
   uint8_t acc_test = mpu6050_testConnection();
   mpu6050_init();
 
+  int led_count = 0;
   uint8_t frame[FRAME_LENGTH];
   while (1) {
-    for (int duty = MIN_DUTY; duty <= MAX_DUTY; duty += 5) {
-      // _delay_ms(25);
+    acc_create_frame(frame);                 // Create a frame with accelerometer output
+    usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
 
-      acc_create_frame(frame);                 // Create a frame with accelerometer output
-      usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
-
-      OCR1A = duty;  // Set PWM TOP to duty
-
-      if (duty % 50 == 0) {
-        PORTB ^= (1 << PB5);  // Blink on-board LED to help with debugging
-      }
+    if (led_count++ % 50 == 0) {
+      PORTB ^= (1 << PB5);
     }
   }
 }
