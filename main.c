@@ -12,10 +12,11 @@
 #include "mpu6050/mpu6050.h"
 #include "usart/usart.h"
 
-#define MIN_DUTY 1600
+#define MIN_DUTY 1000  // is too low for testing purposed
 #define MAX_DUTY 4400
 
 #define FRAME_LENGTH 18
+#define FRAME_SERVO_LEN 8
 
 // Calculates checksum
 uint8_t calculate_checksum(uint8_t* buffer, unsigned size) {
@@ -91,8 +92,8 @@ int main(void) {
   int led_count = 0;
   uint8_t frame[FRAME_LENGTH];
   while (1) {
-    acc_create_frame(frame);                 // Create a frame with accelerometer output
-    usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
+    // acc_create_frame(frame);                 // Create a frame with accelerometer output
+    // usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
 
     if (led_count++ % 50 == 0) {
       PORTB ^= (1 << PB5);
@@ -101,80 +102,42 @@ int main(void) {
 }
 
 ISR(USART_RX_vect) {
-  static uint8_t byteNumber = 0;
-  static uint8_t value8LSB = 0;
-  static uint8_t value8MSB = 0;
-
+  static uint8_t byte_number = 0;
   static uint8_t crc = 0;
+  static uint8_t frame[FRAME_SERVO_LEN];
+  static uint8_t frame_ready = 0;
 
   uint8_t input = UDR0;
 
-  switch (byteNumber) {
-    case 0:
-      if (input == 'L') {
-        crc = input;
-
-        byteNumber++;
-      } else {
-        // TODO: handle error gracefully?
-        byteNumber = 0;
-        break;
-      }
-      break;
-    case 1:
-      if (input == 'D') {
-        crc ^= input;
-
-        byteNumber++;
-      } else {
-        // TODO: handle error gracefully?
-        byteNumber = 0;
-      }
-      break;
-    case 2:
-      if (input == '+') {
-        crc ^= input;
-
-        byteNumber++;
-      } else {
-        // TODO: handle error gracefully?
-        byteNumber = 0;
-      }
-      break;
-    case 3:
-      value8MSB = input;
-      crc ^= input;
-
-      byteNumber++;
-      break;
-    case 4:
-      value8LSB = input;
-      crc ^= input;
-
-      byteNumber++;
-      break;
-    case 5:
-      if (input == '#') {
-        byteNumber++;
-        crc ^= input;
-      }
-      break;
-    case 6:
-      if (input == crc) {
-        // OK
-        byteNumber = 0;
-        crc = 0;
-      } else {
-        // TODO: handle error gracefully?
-      }
-      break;
+  if (byte_number == 0 && input == 'L') {
+    crc = input;
+  } else if ((byte_number == 1 && input == 'D') || (byte_number == 2 && input == 2) ||
+             (byte_number == 3 && input == '+') || (byte_number == 4) || (byte_number == 5) ||
+             (byte_number == 6 && input == '#')) {
+    crc ^= input;
+  } else if (byte_number == 7) {
+    frame_ready = 1;
+  } else {
+    byte_number = 0;
+    frame_ready = 0;
+    // bad frame
   }
 
-  uint16_t receivedPWMDuty = (value8MSB << 8) + value8LSB;
+  frame[byte_number] = input;
+  byte_number++;
 
-  uint16_t calculatedPWMDuty = (input * (MAX_DUTY - MIN_DUTY)) / 255 + MIN_DUTY;
+  if (frame_ready && crc == frame[FRAME_SERVO_LEN - 1]) {
+    byte_number = 0;
+    frame_ready = 0;
 
-  if (receivedPWMDuty >= MIN_DUTY && receivedPWMDuty <= MAX_DUTY) {
-    OCR1A = receivedPWMDuty;  // Set PWM TOP to received PWM duty
+    uint16_t pwm = (frame[4] << 8) + frame[5];
+
+    usart_write_byte(pwm / 100);
+
+    if (pwm >= MIN_DUTY && pwm <= MAX_DUTY) {
+      OCR1A = pwm;  // Set PWM TOP to received PWM duty
+    }
+
+    frame_ready = 0;
   }
 }
