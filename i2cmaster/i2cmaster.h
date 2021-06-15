@@ -10,10 +10,6 @@
  * Usage:    see Doxygen manual
  **************************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef DOXYGEN
 /**
  @defgroup pfleury_ic2master I2C Master library
@@ -138,7 +134,7 @@ extern unsigned char i2c_rep_start(unsigned char addr);
  @param    addr address and transfer direction of I2C device
  @return   none
  */
-extern uint8_t i2c_start_wait(unsigned char addr);
+extern void i2c_start_wait(unsigned char addr);
 
 /**
  @brief Send one byte to I2C device
@@ -171,10 +167,6 @@ extern unsigned char i2c_readNak(void);
  */
 extern unsigned char i2c_read(unsigned char ack);
 #define i2c_read(ack) (ack) ? i2c_readAck() : i2c_readNak();
-
-#ifdef __cplusplus
-}
-#endif
 
 /**@}*/
 #endif

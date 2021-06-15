@@ -89,18 +89,18 @@ int main(void) {
   // Accelerometer MPU6050
   uint8_t acc_test = mpu6050_testConnection();
   mpu6050_init();
-  uint8_t dmt_status = mpu6050_dmpInitialize();  // last time it returned 0 - success
+  // uint8_t dmt_status = mpu6050_dmpInitialize();  // last time it returned 0 - success
 
   int led_count = 0;
   uint8_t frame[FRAME_LENGTH];
   while (1) {
-    // acc_create_frame(frame);                 // Create a frame with accelerometer output
-    // usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
-    double qw, qx, qy, qz;
-    mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz);
-    PORTB ^= (1 << PB5);
-    while (1) {
-    }
+    acc_create_frame(frame);                 // Create a frame with accelerometer output
+    usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
+    // double qw, qx, qy, qz;
+    // mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz);
+    // PORTB ^= (1 << PB5);
+    // while (1) {
+    //}
   }
 }
 

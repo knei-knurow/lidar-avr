@@ -26,8 +26,8 @@ mpu6050.o: mpu6050/mpu6050.c
 mpu6050dmp6.o: mpu6050/mpu6050dmp6.c
 	$(CC) $(CFLAGS) -Os -c mpu6050/mpu6050dmp6.c -DF_CPU=16000000UL $(INCLUDES)
 
-i2cmaster.o: mpu6050/i2cmaster.c
-	$(CC) $(CFLAGS) -Os -c mpu6050/i2cmaster.c -DF_CPU=16000000UL $(INCLUDES)
+i2cmaster.o: i2cmaster/i2cmaster.c
+	$(CC) $(CFLAGS) -Os -c i2cmaster/i2cmaster.c -DF_CPU=16000000UL $(INCLUDES)
 
 
 clean:
