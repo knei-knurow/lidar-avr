@@ -12,8 +12,8 @@
 #include "mpu6050/mpu6050.h"
 #include "usart/usart.h"
 
-#define MIN_DUTY 1000  // is too low for testing purposed
-#define MAX_DUTY 4400
+#define MIN_DUTY 500  // is too low for testing purposed
+#define MAX_DUTY 5000
 #define START_DUTY ((MAX_DUTY - MIN_DUTY) / 2 + MIN_DUTY)
 
 #define FRAME_LENGTH 18
@@ -84,20 +84,22 @@ int main(void) {
   sei();  // Enable global interrupts
 
   // LED
-  DDRB = DDRB | (1 << PB5);  // Initialize the on-board LED to help with debugging
+  DDRB |= (1 << PB5);  // Initialize the on-board LED to help with debugging
 
   // Accelerometer MPU6050
   uint8_t acc_test = mpu6050_testConnection();
   mpu6050_init();
+  uint8_t dmt_status = mpu6050_dmpInitialize();  // last time it returned 0 - success
 
   int led_count = 0;
   uint8_t frame[FRAME_LENGTH];
   while (1) {
-    acc_create_frame(frame);                 // Create a frame with accelerometer output
-    usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
-
-    if (led_count++ % 50 == 0) {
-      PORTB ^= (1 << PB5);
+    // acc_create_frame(frame);                 // Create a frame with accelerometer output
+    // usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
+    double qw, qx, qy, qz;
+    mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz);
+    PORTB ^= (1 << PB5);
+    while (1) {
     }
   }
 }
