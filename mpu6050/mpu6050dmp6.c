@@ -289,7 +289,7 @@ uint8_t mpu6050_dmpInitialize() {
 
       // set gyro sensitivity to +/- 2000 deg/sec
       mpu6050_writeBits(MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT,
-                        MPU6050_GCONFIG_FS_SEL_LENGTH, MPU6050_GYRO_FS_2000);
+                        MPU6050_GCONFIG_FS_SEL_LENGTH, MPU6050_GYRO_FS_250);
 
       // set DMP configuration bytes (function unknown)
       mpu6050_writeByte(MPU6050_RA_DMP_CFG_1, 0x03);
