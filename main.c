@@ -18,6 +18,10 @@
 
 #define FRAME_SERVO_LEN 8
 
+// Buffer for MPU6050 data processed by DMP
+extern uint8_t* mpu6050_fifoBuffer;
+
+// Converts float to 4 bytes
 void float_to_bytes(uint8_t* buffer, float v) {
   union {
     float a;
@@ -26,9 +30,6 @@ void float_to_bytes(uint8_t* buffer, float v) {
   thing.a = v;
   memcpy(buffer, thing.bytes, 4);
 }
-
-// Buffer for MPU6050 data processed by DMP
-extern uint8_t* mpu6050_fifoBuffer;
 
 // Calculates checksum
 uint8_t calculate_checksum(uint8_t* buffer, unsigned size) {
@@ -72,42 +73,9 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[17] = calculate_checksum(buffer, 17);
 }
 
-void acc_create_frame_dmp_quat(uint8_t* frame_buffer, uint8_t* dmp_buffer) {
+void acc_create_frame_dmp_quat(uint8_t* frame_buffer, float* qw, float* qx, float* qy, float* qz) {
   frame_buffer[0] = 'L';
   frame_buffer[1] = 'Q';
-  frame_buffer[2] = 8;  // data part length
-  frame_buffer[3] = '+';
-
-  frame_buffer[4] = dmp_buffer[0];    // quaternion W (high)
-  frame_buffer[5] = dmp_buffer[1];    // quaternion W (low)
-  frame_buffer[6] = dmp_buffer[4];    // quaternion X (high)
-  frame_buffer[7] = dmp_buffer[5];    // quaternion X (low)
-  frame_buffer[8] = dmp_buffer[8];    // quaternion Y (high)
-  frame_buffer[9] = dmp_buffer[9];    // quaternion Y (low)
-  frame_buffer[10] = dmp_buffer[12];  // quaternion Z (high)
-  frame_buffer[11] = dmp_buffer[13];  // quaternion Z (low)
-
-  frame_buffer[12] = '#';
-  frame_buffer[13] = calculate_checksum(frame_buffer, 13);
-}
-
-void acc_create_frame_dmp(uint8_t* frame_buffer, uint8_t* dmp_buffer) {
-  frame_buffer[0] = 'L';
-  frame_buffer[1] = 'A';
-  frame_buffer[2] = 20;  // data part length
-  frame_buffer[3] = '+';
-
-  for (int i = 4; i < 4 + 42; i++) {
-    frame_buffer[i] = dmp_buffer[i - 4];
-  }
-
-  frame_buffer[46] = '#';
-  frame_buffer[47] = calculate_checksum(frame_buffer, 47);
-}
-
-void acc_create_frame_mahony(uint8_t* frame_buffer, float* qw, float* qx, float* qy, float* qz) {
-  frame_buffer[0] = 'L';
-  frame_buffer[1] = 'A';
   frame_buffer[2] = 16;  // data part length
   frame_buffer[3] = '+';
 
@@ -120,9 +88,23 @@ void acc_create_frame_mahony(uint8_t* frame_buffer, float* qw, float* qx, float*
   frame_buffer[21] = calculate_checksum(frame_buffer, 21);
 }
 
+// void acc_create_frame_dmp(uint8_t* frame_buffer, uint8_t* dmp_buffer) {
+//   frame_buffer[0] = 'L';
+//   frame_buffer[1] = 'A';
+//   frame_buffer[2] = 20;  // data part length
+//   frame_buffer[3] = '+';
+
+//   for (int i = 4; i < 4 + 42; i++) {
+//     frame_buffer[i] = dmp_buffer[i - 4];
+//   }
+
+//   frame_buffer[46] = '#';
+//   frame_buffer[47] = calculate_checksum(frame_buffer, 47);
+// }
+
 void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1) {
   frame_buffer[0] = 'L';
-  frame_buffer[1] = 'D';
+  frame_buffer[1] = '?';
   frame_buffer[2] = 2;  // data part length
   frame_buffer[3] = '+';
   frame_buffer[4] = v0;
@@ -182,24 +164,16 @@ int main(void) {
   frame_create_debug(frame, dmp_ok, 0);
   usart_write_frame(frame, 8);
   while (1) {
-    // acc_create_frame(frame);                 // Create a frame with accelerometer output
-    // usart_write_frame(frame, FRAME_LENGTH);  // Write accelerometer output to USART
-
     double qw = 1, qx = 0, qy = 0, qz = 0;
     if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
-      double roll, pitch, yaw;
-      mpu6050_getRollPitchYaw(qw, qx, qy, qz, &roll, &pitch, &yaw);
-      acc_create_frame_dmp_euler(frame, &roll, &pitch, &yaw);
-      usart_write_frame(frame, 18);
+      // double roll, pitch, yaw;
+      // mpu6050_getRollPitchYaw(qw, qx, qy, qz, &roll, &pitch, &yaw);
+      // acc_create_frame_dmp_euler(frame, &roll, &pitch, &yaw);
+      acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
+      usart_write_frame(frame, 22);
     }
 
-    // mpu6050_updateQuaternion();
-    // mpu6050_getQuaternion(&qw, &qx, &qy, &qz);
-    // acc_create_frame_mahony(frame, &qw, &qx, &qy, &qz);
-    // usart_write_frame(frame, 22);
-
     PORTB ^= (1 << PB5);
-    // _delay_ms(500);
   }
 }
 

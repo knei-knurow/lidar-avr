@@ -36,7 +36,7 @@ References:
 
 // definitions for raw data
 // gyro and acc scale
-#define MPU6050_GYRO_FS MPU6050_GYRO_FS_250
+#define MPU6050_GYRO_FS MPU6050_GYRO_FS_2000
 #define MPU6050_ACCEL_FS MPU6050_ACCEL_FS_2
 
 #define MPU6050_GYRO_LSB_250 131.0
@@ -67,7 +67,7 @@ References:
 #define MPU6050_AGAIN MPU6050_ACCEL_LSB_16
 #endif
 
-#define MPU6050_CALIBRATEDACCGYRO 1  // set to 1 if is calibrated
+#define MPU6050_CALIBRATEDACCGYRO 0  // set to 1 if is calibrated
 #if MPU6050_CALIBRATEDACCGYRO == 1
 #define MPU6050_AXOFFSET 0
 #define MPU6050_AYOFFSET 0
