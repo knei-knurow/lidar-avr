@@ -1,5 +1,5 @@
 /*
-MPU6050 lib 0x02
+MPU6050 lib 0x05
 
 copyright (c) Davide Gironi, 2012
 
@@ -19,13 +19,9 @@ References:
 #include <avr/io.h>
 #include "mpu6050registers.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // i2c settings
-#define MPU6050_I2CFLEURYPATH "i2cmaster.h"  // define the path to i2c fleury lib
-#define MPU6050_I2CINIT 0                    // init i2c
+#define MPU6050_I2CFLEURYPATH "../i2cmaster/i2cmaster.h"  // define the path to i2c fleury lib
+#define MPU6050_I2CINIT 1                                 // init i2c
 
 // definitions
 #define MPU6050_ADDR (0x68 << 1)  // device address - 0x68 pin low (GND), 0x69 pin high (VCC)
@@ -36,11 +32,11 @@ extern "C" {
 // 0 disabled
 // 1 mahony filter
 // 2 dmp chip processor
-#define MPU6050_GETATTITUDE 0
+#define MPU6050_GETATTITUDE 2
 
 // definitions for raw data
 // gyro and acc scale
-#define MPU6050_GYRO_FS MPU6050_GYRO_FS_250
+#define MPU6050_GYRO_FS MPU6050_GYRO_FS_2000
 #define MPU6050_ACCEL_FS MPU6050_ACCEL_FS_2
 
 #define MPU6050_GYRO_LSB_250 131.0
@@ -89,14 +85,16 @@ extern "C" {
 
 // definitions for attitude 1 function estimation
 #if MPU6050_GETATTITUDE == 1
-#error "GETATTITUDE == 1 is not supported!"
 // setup timer0 overflow event and define madgwickAHRSsampleFreq equal to timer0 frequency
 // timerfreq = (FCPU / prescaler) / timerscale
 //     timerscale 8-bit = 256
 // es. 61 = (16000000 / 1024) / 256
-#define MPU6050_TIMER0INIT             \
+#define MPU6050_TIMERINIT              \
   TCCR0B |= (1 << CS02) | (1 << CS00); \
   TIMSK0 |= (1 << TOIE0);
+// update timer for attitude
+#define MPU6050_TIMERUPDATE \
+  ISR(TIMER0_OVF_vect) { mpu6050_updateQuaternion(); }
 #define mpu6050_mahonysampleFreq 61.0f        // sample frequency in Hz
 #define mpu6050_mahonytwoKpDef (2.0f * 0.5f)  // 2 * proportional gain
 #define mpu6050_mahonytwoKiDef (2.0f * 0.1f)  // 2 * integral gain
@@ -115,8 +113,8 @@ extern volatile uint8_t mpu6050_mpuInterrupt;
 #endif
 
 // functions
-extern void mpu6050_init(void);
-extern uint8_t mpu6050_testConnection(void);
+extern void mpu6050_init();
+extern uint8_t mpu6050_testConnection();
 
 #if MPU6050_GETATTITUDE == 0
 extern void mpu6050_getRawData(int16_t* ax,
@@ -133,8 +131,8 @@ extern void mpu6050_getConvData(double* axg,
                                 double* gzds);
 #endif
 
-extern void mpu6050_setSleepDisabled(void);
-extern void mpu6050_setSleepEnabled(void);
+extern void mpu6050_setSleepDisabled();
+extern void mpu6050_setSleepEnabled();
 
 extern int8_t mpu6050_readBytes(uint8_t regAddr, uint8_t length, uint8_t* data);
 extern int8_t mpu6050_readByte(uint8_t regAddr, uint8_t* data);
@@ -144,15 +142,15 @@ extern int8_t mpu6050_readBits(uint8_t regAddr, uint8_t bitStart, uint8_t length
 extern int8_t mpu6050_readBit(uint8_t regAddr, uint8_t bitNum, uint8_t* data);
 extern void mpu6050_writeBits(uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
 extern void mpu6050_writeBit(uint8_t regAddr, uint8_t bitNum, uint8_t data);
+extern void mpu6050_writeWord(uint8_t regAddr, uint16_t data);
 
 #if MPU6050_GETATTITUDE == 1
-extern void mpu6050_updateQuaternion(void);
+extern void mpu6050_updateQuaternion();
 extern void mpu6050_getQuaternion(double* qw, double* qx, double* qy, double* qz);
 extern void mpu6050_getRollPitchYaw(double* pitch, double* roll, double* yaw);
 #endif
 
 #if MPU6050_GETATTITUDE == 2
-extern void mpu6050_writeWords(uint8_t regAddr, uint8_t length, uint16_t* data);
 extern void mpu6050_setMemoryBank(uint8_t bank, uint8_t prefetchEnabled, uint8_t userBank);
 extern void mpu6050_setMemoryStartAddress(uint8_t address);
 extern void mpu6050_readMemoryBlock(uint8_t* data,
@@ -168,20 +166,26 @@ extern uint8_t mpu6050_writeMemoryBlock(const uint8_t* data,
 extern uint8_t mpu6050_writeDMPConfigurationSet(const uint8_t* data,
                                                 uint16_t dataSize,
                                                 uint8_t useProgMem);
-extern uint16_t mpu6050_getFIFOCount(void);
+extern uint16_t mpu6050_getFIFOCount();
 extern void mpu6050_getFIFOBytes(uint8_t* data, uint8_t length);
-extern uint8_t mpu6050_getIntStatus(void);
+extern uint8_t mpu6050_getIntStatus();
 extern void mpu6050_resetFIFO();
-extern int8_t mpu6050_getXGyroOffset(void);
-extern void mpu6050_setXGyroOffset(int8_t offset);
-extern int8_t mpu6050_getYGyroOffset(void);
-extern void mpu6050_setYGyroOffset(int8_t offset);
-extern int8_t mpu6050_getZGyroOffset(void);
-extern void mpu6050_setZGyroOffset(int8_t offset);
+extern int16_t mpu6050_getXGyroOffset();
+extern void mpu6050_setXGyroOffset(int16_t offset);
+extern int16_t mpu6050_getYGyroOffset();
+extern void mpu6050_setYGyroOffset(int16_t offset);
+extern int16_t mpu6050_getZGyroOffset();
+extern void mpu6050_setZGyroOffset(int16_t offset);
+extern int16_t mpu6050_getXAccelOffset();
+extern void mpu6050_setXAccelOffset(int16_t offset);
+extern int16_t mpu6050_getYAccelOffset();
+extern void mpu6050_setYAccelOffset(int16_t offset);
+extern int16_t mpu6050_getZAccelOffset();
+extern void mpu6050_setZAccelOffset(int16_t offset);
 // base dmp
-extern uint8_t mpu6050_dmpInitialize(void);
-extern void mpu6050_dmpEnable(void);
-extern void mpu6050_dmpDisable(void);
+extern uint8_t mpu6050_dmpInitialize();
+extern void mpu6050_dmpEnable();
+extern void mpu6050_dmpDisable();
 extern void mpu6050_getQuaternion(const uint8_t* packet,
                                   double* qw,
                                   double* qx,
@@ -195,10 +199,6 @@ extern void mpu6050_getRollPitchYaw(double qw,
                                     double* pitch,
                                     double* yaw);
 extern uint8_t mpu6050_getQuaternionWait(double* qw, double* qx, double* qy, double* qz);
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif

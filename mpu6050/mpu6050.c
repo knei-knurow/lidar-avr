@@ -1,5 +1,5 @@
 /*
-MPU6050 lib 0x02
+MPU6050 lib 0x05
 
 copyright (c) Davide Gironi, 2012
 
@@ -145,23 +145,19 @@ void mpu6050_writeBit(uint8_t regAddr, uint8_t bitNum, uint8_t data) {
   mpu6050_writeByte(regAddr, b);
 }
 
-#if MPU6050_GETATTITUDE == 2
 /*
- * write word/words to chip register
+ * write word to chip register
  */
-void mpu6050_writeWords(uint8_t regAddr, uint8_t length, uint16_t* data) {
-  if (length > 0) {
-    uint8_t i = 0;
-    // write data
-    i2c_start(MPU6050_ADDR | I2C_WRITE);
-    i2c_write(regAddr);  // reg
-    for (i = 0; i < length * 2; i++) {
-      i2c_write((uint8_t)(data[i++] >> 8));  // send MSB
-      i2c_write((uint8_t)data[i]);           // send LSB
-    }
-    i2c_stop();
-  }
+void mpu6050_writeWord(uint8_t regAddr, uint16_t data) {
+  // write data
+  i2c_start(MPU6050_ADDR | I2C_WRITE);
+  i2c_write(regAddr);               // reg
+  i2c_write((uint8_t)(data >> 8));  // send MSB
+  i2c_write((uint8_t)data);         // send LSB
+  i2c_stop();
 }
+
+#if MPU6050_GETATTITUDE == 2
 
 /*
  * set a chip memory bank
@@ -379,7 +375,7 @@ uint8_t mpu6050_writeDMPConfigurationSet(const uint8_t* data,
 /*
  * get the fifo count
  */
-uint16_t mpu6050_getFIFOCount(void) {
+uint16_t mpu6050_getFIFOCount() {
   mpu6050_readBytes(MPU6050_RA_FIFO_COUNTH, 2, (uint8_t*)buffer);
   return (((uint16_t)buffer[0]) << 8) | buffer[1];
 }
@@ -394,7 +390,7 @@ void mpu6050_getFIFOBytes(uint8_t* data, uint8_t length) {
 /*
  * get the interrupt status
  */
-uint8_t mpu6050_getIntStatus(void) {
+uint8_t mpu6050_getIntStatus() {
   mpu6050_readByte(MPU6050_RA_INT_STATUS, (uint8_t*)buffer);
   return buffer[0];
 }
@@ -402,56 +398,98 @@ uint8_t mpu6050_getIntStatus(void) {
 /*
  * reset fifo
  */
-void mpu6050_resetFIFO(void) {
+void mpu6050_resetFIFO() {
   mpu6050_writeBit(MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_FIFO_RESET_BIT, 1);
 }
 
 /*
  * get gyro offset X
  */
-int8_t mpu6050_getXGyroOffset(void) {
-  mpu6050_readBits(MPU6050_RA_XG_OFFS_TC, MPU6050_TC_OFFSET_BIT, MPU6050_TC_OFFSET_LENGTH,
-                   (uint8_t*)buffer);
-  return buffer[0];
+int16_t mpu6050_getXGyroOffset() {
+  mpu6050_readBytes(MPU6050_RA_XG_OFFS_USRH, 2, (uint8_t*)buffer);
+  return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
 /*
  * set gyro offset X
  */
-void mpu6050_setXGyroOffset(int8_t offset) {
-  mpu6050_writeBits(MPU6050_RA_XG_OFFS_TC, MPU6050_TC_OFFSET_BIT, MPU6050_TC_OFFSET_LENGTH, offset);
+void mpu6050_setXGyroOffset(int16_t offset) {
+  mpu6050_writeWord(MPU6050_RA_XG_OFFS_USRH, offset);
 }
 
 /*
  * get gyro offset Y
  */
-int8_t mpu6050_getYGyroOffset(void) {
-  mpu6050_readBits(MPU6050_RA_YG_OFFS_TC, MPU6050_TC_OFFSET_BIT, MPU6050_TC_OFFSET_LENGTH,
-                   (uint8_t*)buffer);
-  return buffer[0];
+int16_t mpu6050_getYGyroOffset() {
+  mpu6050_readBytes(MPU6050_RA_YG_OFFS_USRH, 2, (uint8_t*)buffer);
+  return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
 /*
  * set gyro offset Y
  */
-void mpu6050_setYGyroOffset(int8_t offset) {
-  mpu6050_writeBits(MPU6050_RA_YG_OFFS_TC, MPU6050_TC_OFFSET_BIT, MPU6050_TC_OFFSET_LENGTH, offset);
+void mpu6050_setYGyroOffset(int16_t offset) {
+  mpu6050_writeWord(MPU6050_RA_YG_OFFS_USRH, offset);
 }
 
 /*
  * get gyro offset Z
  */
-int8_t mpu6050_getZGyroOffset(void) {
-  mpu6050_readBits(MPU6050_RA_ZG_OFFS_TC, MPU6050_TC_OFFSET_BIT, MPU6050_TC_OFFSET_LENGTH,
-                   (uint8_t*)buffer);
-  return buffer[0];
+int16_t mpu6050_getZGyroOffset() {
+  mpu6050_readBytes(MPU6050_RA_ZG_OFFS_USRH, 2, (uint8_t*)buffer);
+  return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
 /*
  * set gyro offset Z
  */
-void mpu6050_setZGyroOffset(int8_t offset) {
-  mpu6050_writeBits(MPU6050_RA_ZG_OFFS_TC, MPU6050_TC_OFFSET_BIT, MPU6050_TC_OFFSET_LENGTH, offset);
+void mpu6050_setZGyroOffset(int16_t offset) {
+  mpu6050_writeWord(MPU6050_RA_ZG_OFFS_USRH, offset);
+}
+
+/*
+ * get accel offset X
+ */
+int16_t mpu6050_getXAccelOffset() {
+  mpu6050_readBytes(MPU6050_RA_XA_OFFS_H, 2, (uint8_t*)buffer);
+  return (((int16_t)buffer[0]) << 8) | buffer[1];
+}
+
+/*
+ * set accel offset X
+ */
+void mpu6050_setXAccelOffset(int16_t offset) {
+  mpu6050_writeWord(MPU6050_RA_XA_OFFS_H, offset);
+}
+
+/*
+ * get accel offset Y
+ */
+int16_t mpu6050_getYAccelOffset() {
+  mpu6050_readBytes(MPU6050_RA_YA_OFFS_H, 2, (uint8_t*)buffer);
+  return (((int16_t)buffer[0]) << 8) | buffer[1];
+}
+
+/*
+ * set accel offset Y
+ */
+void mpu6050_setYAccelOffset(int16_t offset) {
+  mpu6050_writeWord(MPU6050_RA_YA_OFFS_H, offset);
+}
+
+/*
+ * get accel offset Z
+ */
+int16_t mpu6050_getZAccelOffset() {
+  mpu6050_readBytes(MPU6050_RA_ZA_OFFS_H, 2, (uint8_t*)buffer);
+  return (((int16_t)buffer[0]) << 8) | buffer[1];
+}
+
+/*
+ * set accel offset Z
+ */
+void mpu6050_setZAccelOffset(int16_t offset) {
+  mpu6050_writeWord(MPU6050_RA_ZA_OFFS_H, offset);
 }
 #endif
 
@@ -465,14 +503,14 @@ void mpu6050_setSleepDisabled() {
 /*
  * set sleep enabled
  */
-void mpu6050_setSleepEnabled(void) {
+void mpu6050_setSleepEnabled() {
   mpu6050_writeBit(MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, 1);
 }
 
 /*
  * test connectino to chip
  */
-uint8_t mpu6050_testConnection(void) {
+uint8_t mpu6050_testConnection() {
   mpu6050_readBits(MPU6050_RA_WHO_AM_I, MPU6050_WHO_AM_I_BIT, MPU6050_WHO_AM_I_LENGTH,
                    (uint8_t*)buffer);
   if (buffer[0] == 0x34)
@@ -484,7 +522,13 @@ uint8_t mpu6050_testConnection(void) {
 /*
  * initialize the accel and gyro
  */
-void mpu6050_init(void) {
+void mpu6050_init() {
+#if MPU6050_I2CINIT == 1
+  // init i2c
+  i2c_init();
+  _delay_us(10);
+#endif
+
   // allow mpu6050 chip clocks to start up
   _delay_ms(100);
 
@@ -511,8 +555,7 @@ void mpu6050_init(void) {
                     MPU6050_ACONFIG_AFS_SEL_LENGTH, MPU6050_ACCEL_FS);
 
 #if MPU6050_GETATTITUDE == 1
-#error "Do not enable timer 0 it is in use elsewhere!"
-// MPU6050_TIMER0INIT
+  MPU6050_TIMERINIT
 #endif
 }
 
@@ -646,7 +689,7 @@ void mpu6050_mahonyUpdate(float gx, float gy, float gz, float ax, float ay, floa
 /*
  * update quaternion
  */
-void mpu6050_updateQuaternion(void) {
+void mpu6050_updateQuaternion() {
   int16_t ax = 0;
   int16_t ay = 0;
   int16_t az = 0;
@@ -699,9 +742,7 @@ void mpu6050_updateQuaternion(void) {
 /*
  * update timer for attitude
  */
-ISR(TIMER0_OVF_vect) {
-  mpu6050_updateQuaternion();
-}
+MPU6050_TIMERUPDATE
 
 /*
  * get quaternion

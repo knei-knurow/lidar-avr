@@ -1,5 +1,5 @@
 /*
-MPU6050 lib 0x02
+MPU6050 lib 0x04
 
 copyright (c) Davide Gironi, 2012
 
