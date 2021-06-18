@@ -158,12 +158,12 @@ int main(void) {
   uint8_t frame[64];
 
   // Accelerometer MPU6050
-  // init_dmp_mpu6050(frame);
-  init_raw_mpu6050();
+  init_dmp_mpu6050(frame);
+  // init_raw_mpu6050();
 
   while (1) {
-    // read_dmp_mpu6050(frame);
-    read_raw_mpu6050(frame);
+    read_dmp_mpu6050(frame);
+    // read_raw_mpu6050(frame);
 
     if (led_count++ % 50 == 0) {
       PORTB ^= (1 << PB5);  // Update LED
