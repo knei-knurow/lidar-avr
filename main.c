@@ -73,6 +73,8 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[17] = calculate_checksum(buffer, 17);
 }
 
+// Creates a frame with latest data from Digital Motion Processor and writes
+// it to the buffer.
 void acc_create_frame_dmp_quat(uint8_t* frame_buffer, float* qw, float* qx, float* qy, float* qz) {
   frame_buffer[0] = 'L';
   frame_buffer[1] = 'Q';
@@ -88,20 +90,7 @@ void acc_create_frame_dmp_quat(uint8_t* frame_buffer, float* qw, float* qx, floa
   frame_buffer[21] = calculate_checksum(frame_buffer, 21);
 }
 
-// void acc_create_frame_dmp(uint8_t* frame_buffer, uint8_t* dmp_buffer) {
-//   frame_buffer[0] = 'L';
-//   frame_buffer[1] = 'A';
-//   frame_buffer[2] = 20;  // data part length
-//   frame_buffer[3] = '+';
-
-//   for (int i = 4; i < 4 + 42; i++) {
-//     frame_buffer[i] = dmp_buffer[i - 4];
-//   }
-
-//   frame_buffer[46] = '#';
-//   frame_buffer[47] = calculate_checksum(frame_buffer, 47);
-// }
-
+// Create frame which can be ignored and can be uses for testing purposes.
 void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1) {
   frame_buffer[0] = 'L';
   frame_buffer[1] = '?';
@@ -111,20 +100,6 @@ void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1) {
   frame_buffer[5] = v1;
   frame_buffer[6] = '#';
   frame_buffer[7] = calculate_checksum(frame_buffer, 7);
-}
-
-void acc_create_frame_dmp_euler(uint8_t* frame_buffer, double* roll, double* pitch, double* yaw) {
-  frame_buffer[0] = 'L';
-  frame_buffer[1] = 'A';
-  frame_buffer[2] = 16;  // data part length
-  frame_buffer[3] = '+';
-
-  float_to_bytes(frame_buffer + 4, *roll);
-  float_to_bytes(frame_buffer + 8, *pitch);
-  float_to_bytes(frame_buffer + 12, *yaw);
-
-  frame_buffer[16] = '#';
-  frame_buffer[17] = calculate_checksum(frame_buffer, 17);
 }
 
 int main(void) {
@@ -160,20 +135,18 @@ int main(void) {
   mpu6050_init();
   uint8_t dmp_ok = mpu6050_dmpInitialize();
   mpu6050_dmpEnable();
-  _delay_ms(1000);
-  frame_create_debug(frame, dmp_ok, 0);
-  usart_write_frame(frame, 8);
+
+  frame_create_debug(frame, dmp_ok, 0);  // Create debug frame with MPU6050 initialization status
+  usart_write_frame(frame, 8);           // Send MPU6050 initialization status
+
   while (1) {
     double qw = 1, qx = 0, qy = 0, qz = 0;
     if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
-      // double roll, pitch, yaw;
-      // mpu6050_getRollPitchYaw(qw, qx, qy, qz, &roll, &pitch, &yaw);
-      // acc_create_frame_dmp_euler(frame, &roll, &pitch, &yaw);
       acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
       usart_write_frame(frame, 22);
     }
 
-    PORTB ^= (1 << PB5);
+    PORTB ^= (1 << PB5);  // Update LED
   }
 }
 
