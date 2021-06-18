@@ -102,6 +102,32 @@ void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1) {
   frame_buffer[7] = calculate_checksum(frame_buffer, 7);
 }
 
+void init_raw_mpu6050() {
+  mpu6050_init();
+}
+
+void init_dmp_mpu6050(uint8_t* frame) {
+  mpu6050_init();
+  uint8_t dmp_ok = mpu6050_dmpInitialize();
+  mpu6050_dmpEnable();
+
+  frame_create_debug(frame, dmp_ok, 0);  // Create debug frame with MPU6050 initialization
+  usart_write_frame(frame, 8);           // Send MPU6050 initialization status
+}
+
+void read_raw_mpu6050(uint8_t* frame) {
+  acc_create_frame(frame);
+  usart_write_frame(frame, 18);
+}
+
+void read_dmp_mpu6050(uint8_t* frame) {
+  double qw = 1, qx = 0, qy = 0, qz = 0;
+  if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
+    acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
+    usart_write_frame(frame, 22);
+  }
+}
+
 int main(void) {
   // PWM
   TCCR1A |= (1 << WGM11);                 // Set Fast-PWM mode 1/2
@@ -132,21 +158,12 @@ int main(void) {
   uint8_t frame[64];
 
   // Accelerometer MPU6050
-  // mpu6050_init();
-  // uint8_t dmp_ok = mpu6050_dmpInitialize();
-  // mpu6050_dmpEnable();
-
-  // frame_create_debug(frame, dmp_ok, 0);  // Create debug frame with MPU6050 initialization status
-  // usart_write_frame(frame, 8);           // Send MPU6050 initialization status
+  // init_dmp_mpu6050(frame);
+  init_raw_mpu6050();
 
   while (1) {
-    double qw = 1, qx = 0, qy = 0, qz = 0;
-    // if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
-    // acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
-    // usart_write_frame(frame, 22);
-    acc_create_frame(frame);
-    usart_write_frame(frame, 18);
-    //}
+    // read_dmp_mpu6050(frame);
+    read_raw_mpu6050(frame);
 
     if (led_count++ % 50 == 0) {
       PORTB ^= (1 << PB5);  // Update LED
