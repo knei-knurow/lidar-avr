@@ -132,21 +132,25 @@ int main(void) {
   uint8_t frame[64];
 
   // Accelerometer MPU6050
-  mpu6050_init();
-  uint8_t dmp_ok = mpu6050_dmpInitialize();
-  mpu6050_dmpEnable();
+  // mpu6050_init();
+  // uint8_t dmp_ok = mpu6050_dmpInitialize();
+  // mpu6050_dmpEnable();
 
-  frame_create_debug(frame, dmp_ok, 0);  // Create debug frame with MPU6050 initialization status
-  usart_write_frame(frame, 8);           // Send MPU6050 initialization status
+  // frame_create_debug(frame, dmp_ok, 0);  // Create debug frame with MPU6050 initialization status
+  // usart_write_frame(frame, 8);           // Send MPU6050 initialization status
 
   while (1) {
     double qw = 1, qx = 0, qy = 0, qz = 0;
-    if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
-      acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
-      usart_write_frame(frame, 22);
-    }
+    // if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
+    // acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
+    // usart_write_frame(frame, 22);
+    acc_create_frame(frame);
+    usart_write_frame(frame, 18);
+    //}
 
-    PORTB ^= (1 << PB5);  // Update LED
+    if (led_count++ % 50 == 0) {
+      PORTB ^= (1 << PB5);  // Update LED
+    }
   }
 }
 
