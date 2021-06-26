@@ -75,7 +75,7 @@ void acc_create_frame(uint8_t* buffer) {
 
 // Creates a frame with latest data from Digital Motion Processor and writes
 // it to the buffer.
-void acc_create_frame_dmp_quat(uint8_t* frame_buffer, float* qw, float* qx, float* qy, float* qz) {
+void acc_create_frame_quat(uint8_t* frame_buffer, float* qw, float* qx, float* qy, float* qz) {
   frame_buffer[0] = 'L';
   frame_buffer[1] = 'Q';
   frame_buffer[2] = 16;  // data part length
@@ -102,10 +102,20 @@ void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1) {
   frame_buffer[7] = calculate_checksum(frame_buffer, 7);
 }
 
+#if MPU6050_GETATTITUDE == 0
+// Initializes mpu6050 to grab raw data: accel X Y Z, gyro X Y Z
 void init_raw_mpu6050() {
   mpu6050_init();
 }
 
+// Grab raw data: accel X Y Z, gyro X Y Z
+void read_raw_mpu6050(uint8_t* frame) {
+  acc_create_frame(frame);
+  usart_write_frame(frame, 18);
+}
+#elif MPU6050_GETATTITUDE == 2
+// Initializes mpu6050 to grab raw DMP data: QW QX QY QZ
+// Please DO NOT use this one, I have wasted 10 hours with it.
 void init_dmp_mpu6050(uint8_t* frame) {
   mpu6050_init();
   uint8_t dmp_ok = mpu6050_dmpInitialize();
@@ -115,18 +125,30 @@ void init_dmp_mpu6050(uint8_t* frame) {
   usart_write_frame(frame, 8);           // Send MPU6050 initialization status
 }
 
-void read_raw_mpu6050(uint8_t* frame) {
-  acc_create_frame(frame);
-  usart_write_frame(frame, 18);
-}
-
+// Grab raw DMP data: QW QX QY QZ
+// Please DO NOT use this one, I have wasted 10 hours with it.
 void read_dmp_mpu6050(uint8_t* frame) {
   double qw = 1, qx = 0, qy = 0, qz = 0;
   if (mpu6050_getQuaternionWait(&qw, &qx, &qy, &qz)) {
-    acc_create_frame_dmp_quat(frame, &qw, &qx, &qy, &qz);
+    acc_create_frame_quat(frame, &qw, &qx, &qy, &qz);
     usart_write_frame(frame, 22);
   }
 }
+#elif MPU6050_GETATTITUDE == 1
+void init_mahony_mpu6050() {
+  mpu6050_init();
+  _delay_ms(50);
+}
+
+void read_mahony_mpu6050(uint8_t* frame) {
+  double qw = 1, qx = 0, qy = 0, qz = 0;
+  mpu6050_getQuaternion(&qw, &qx, &qy, &qz);
+  acc_create_frame_quat(frame, &qw, &qx, &qy, &qz);
+  usart_write_frame(frame, 22);
+
+  _delay_ms(10);  // TODO: Remove if possible
+}
+#endif
 
 int main(void) {
   // PWM
@@ -157,16 +179,28 @@ int main(void) {
   // Data frame
   uint8_t frame[64];
 
-  // Accelerometer MPU6050
+// Accelerometer MPU6050
+#if MPU6050_GETATTITUDE == 0
+  init_raw_mpu6050();
+#elif MPU6050_GETATTITUDE == 1
+  init_mahony_mpu6050();
+#elif MPU6050_GETATTITUDE == 2
   init_dmp_mpu6050(frame);
-  // init_raw_mpu6050();
+#endif
 
   while (1) {
+    // Read MPU6050
+#if MPU6050_GETATTITUDE == 0
+    read_raw_mpu6050(frame);
+#elif MPU6050_GETATTITUDE == 1
+    read_mahony_mpu6050(frame);
+#elif MPU6050_GETATTITUDE == 2
     read_dmp_mpu6050(frame);
-    // read_raw_mpu6050(frame);
+#endif
 
-    if (led_count++ % 50 == 0) {
-      PORTB ^= (1 << PB5);  // Update LED
+    // Update LED
+    if (led_count++ % 20 == 0) {
+      PORTB ^= (1 << PB5);
     }
   }
 }

@@ -32,7 +32,7 @@ References:
 // 0 disabled
 // 1 mahony filter
 // 2 dmp chip processor
-#define MPU6050_GETATTITUDE 2
+#define MPU6050_GETATTITUDE 1
 
 // definitions for raw data
 // gyro and acc scale
