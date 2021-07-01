@@ -191,7 +191,7 @@ int main(void) {
   while (1) {
     // Read MPU6050
 #if MPU6050_GETATTITUDE == 0
-    read_raw_mpu6050(frame);
+    read_raw_mpu6050(frame);  // requires about 10 ms
 #elif MPU6050_GETATTITUDE == 1
     read_mahony_mpu6050(frame);
 #elif MPU6050_GETATTITUDE == 2
@@ -202,6 +202,8 @@ int main(void) {
     if (led_count++ % 20 == 0) {
       PORTB ^= (1 << PB5);
     }
+
+    _delay_ms(10);
   }
 }
 
