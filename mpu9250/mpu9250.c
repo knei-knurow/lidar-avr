@@ -64,7 +64,7 @@ int mpu9250_setup() {
   UART_Printf("9-DOF 16-bit\n\r");
   UART_Printf("motion sensor\n\r");
   UART_Printf("60 ug LSB\n\r");
-  _delay_ms(800);
+  // _delay_ms(800);
 
   // Read the WHO_AM_I register, this is a good test of communication
   // readBytes(MPU9250_ADDRESS, ACCEL_XOUT_H, 6, &rawData[0]);  // Read the six raw data registers
@@ -84,7 +84,7 @@ int mpu9250_setup() {
   ////  display.setCursor(0,40);
   //  UART_Printf(0x71, HEX);
   //  display.display();
-  _delay_ms(800);
+  // _delay_ms(800);
 
   if (whoami == 0x71)  // WHO_AM_I should always be 0x68
   {
@@ -112,7 +112,8 @@ int mpu9250_setup() {
                 (int)(1000 * accelBias[2]));
 
     UART_Printf("%d %d %d °/s\n\r", gyroBias[0], gyroBias[1], gyroBias[2]);
-    _delay_ms(1000);
+    // _delay_ms(1000)
+    _delay_ms(50);
 
     initMPU9250();
     UART_Printf(
@@ -136,7 +137,8 @@ int mpu9250_setup() {
       if (PinCFG == 0x22 && MasterDis == 0x00 && IntEna == 0x01) {
         BypassTrue = 1;
       }
-      _delay_ms(800);
+      // _delay_ms(800);
+      _delay_ms(50);
     }
 
     // Read the WHO_AM_I register of the magnetometer, this is a good test of communication
@@ -144,7 +146,8 @@ int mpu9250_setup() {
     UART_Printf("AK8963\n\rI AM %x I should be 0x48\n\r", whoami);
 
     if (whoami == 0x48) {
-      _delay_ms(1000);
+      // _delay_ms(1000);
+      _delay_ms(50);
 
       // Get magnetometer calibration from AK8963 ROM
       initAK8963(magCalibration);
@@ -164,7 +167,8 @@ int mpu9250_setup() {
       UART_Printf("ASAX %d\n", magCalibration[0]);
       UART_Printf("ASAY %d\n", magCalibration[1]);
       UART_Printf("ASAZ %d\n", magCalibration[2]);
-      _delay_ms(1000);
+      // _delay_ms(1000);
+      _delay_ms(100);
     } else {
       UART_Printf("Could not connect to AK8963: 0x%x\n\r", whoami);
     }

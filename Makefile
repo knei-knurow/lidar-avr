@@ -11,11 +11,17 @@ flash: main.hex
 main.hex: main.elf
 	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
 
-main.elf: main.o usart.o mpu9250.o twi.o
-	$(CC) $(CFLAGS) -Os -o main.elf main.o usart.o mpu9250.o twi.o -DF_CPU=16000000UL
+main.elf: main.o usart.o mpu9250.o twi.o lidar-avr.o frames.o
+	$(CC) $(CFLAGS) -Os -o main.elf main.o usart.o mpu9250.o twi.o lidar-avr.o frames.o -DF_CPU=16000000UL
 
 main.o: main.c
 	$(CC) $(CFLAGS) -Os -c main.c -DF_CPU=16000000UL $(INCLUDES)
+
+lidar-avr.o: lidar-avr.c
+	$(CC) $(CFLAGS) -Os -c lidar-avr.c -DF_CPU=16000000UL $(INCLUDES)
+
+frames.o: frames/frames.c
+	$(CC) $(CFLAGS) -Os -c frames/frames.c -DF_CPU=16000000UL $(INCLUDES)
 
 usart.o: usart/usart.c
 	$(CC) $(CFLAGS) -Os -c usart/usart.c -DF_CPU=16000000UL $(INCLUDES)
