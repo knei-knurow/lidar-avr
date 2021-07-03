@@ -1,4 +1,6 @@
 #include "mpu9250.h"
+#include "../frames/frames.h"
+#include "../usart/usart.h"
 
 //#define byteWrite_DEBUG 1
 //#define byteWrite_Errors 1
@@ -46,7 +48,7 @@ float magCalibration[3] = {0, 0, 0},
 
 float magBias[3] = {0, 0, 0}, magScale[3] = {0, 0, 0};
 
-int mpu9250_setup() {
+int mpu9250_setup(uint8_t* frame) {
   //  TWBR = 12;  // 400 kbit/sec I2C speed
   // Set up the interrupt pin, its set as active high, push-pull
   // int intPin = 12; -> PIN12 = Pin B4
@@ -86,9 +88,14 @@ int mpu9250_setup() {
   //  display.display();
   // _delay_ms(800);
 
+  frame_create_debug(frame, 'C', whoami);
+  usart_write_frame(frame, 8);
+
   if (whoami == 0x71)  // WHO_AM_I should always be 0x68
   {
     UART_Printf("MPU9250 is online...\n\r");
+    frame_create_debug(frame, 'D', 0);
+    usart_write_frame(frame, 8);
 
     MPU9250SelfTest(SelfTest);  // Start by performing self test and reporting values
     UART_Printf("x-axis self test: acceleration trim within : %d\% of factory value\n\r",
@@ -101,8 +108,14 @@ int mpu9250_setup() {
     UART_Printf("y-axis self test: gyration trim within : %d\% of factory value\n\r", SelfTest[4]);
     UART_Printf("z-axis self test: gyration trim within : %d\% of factory value\n\r", SelfTest[5]);
 
+    frame_create_debug(frame, 'E', 0);
+    usart_write_frame(frame, 8);
+
     calibrateMPU9250(
         gyroBias, accelBias);  // Calibrate gyro and accelerometers, load biases in bias registers
+
+    frame_create_debug(frame, 'F', 0);
+    usart_write_frame(frame, 8);
 
     UART_Printf("MPU9250 bias\n\r");
 
@@ -116,6 +129,9 @@ int mpu9250_setup() {
     _delay_ms(50);
 
     initMPU9250();
+    frame_create_debug(frame, 'G', 0);
+    usart_write_frame(frame, 8);
+
     UART_Printf(
         "MPU9250 initialized for active data mode....\n\r");  // Initialize device for active mode
                                                               // read of acclerometer, gyroscope,
@@ -124,6 +140,9 @@ int mpu9250_setup() {
     uint8_t BypassTrue = 0;
 
     while (BypassTrue == 0) {
+      frame_create_debug(frame, 'H', 0);
+      usart_write_frame(frame, 8);
+
       writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x22);
       writeByte(MPU9250_ADDRESS, INT_ENABLE, 0x01);  // Enable data ready (bit 0) interrupt
       uint8_t PinCFG = readByte(MPU9250_ADDRESS, INT_PIN_CFG);      // 0x22);
@@ -146,6 +165,9 @@ int mpu9250_setup() {
     UART_Printf("AK8963\n\rI AM %x I should be 0x48\n\r", whoami);
 
     if (whoami == 0x48) {
+      frame_create_debug(frame, 'I', 0);
+      usart_write_frame(frame, 8);
+
       // _delay_ms(1000);
       _delay_ms(50);
 
@@ -156,6 +178,8 @@ int mpu9250_setup() {
                                                                // read of magnetometer
       getMres();
       magcalMPU9250(magBias, magScale);
+      frame_create_debug(frame, 'J', 0);
+      usart_write_frame(frame, 8);
 
 #ifdef SerialDebug
       UART_Printf("Calibration values:\n\r");
@@ -180,6 +204,8 @@ int mpu9250_setup() {
     UART_Printf("Could not connect to MPU9250: 0x%x\n\r", whoami);
   }
   UART_Printf("Init done!\n\r");
+  frame_create_debug(frame, 'K', 0);
+  usart_write_frame(frame, 8);
 }
 
 //===================================================================================================================

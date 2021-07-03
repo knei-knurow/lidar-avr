@@ -83,7 +83,7 @@
          // proportional feedback, Ki for integral
 #define Ki 0.0f
 
-int mpu9250_setup(void);
+int mpu9250_setup(uint8_t* frame);
 
 /*---------------------------------- Lokale Funktionen -----------------------------------------*/
 void writeByte(uint8_t address, uint8_t subAddress, uint8_t data);

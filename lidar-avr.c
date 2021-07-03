@@ -52,18 +52,15 @@ void read_mahony_mpu6050(uint8_t* frame) {
 
 #if MPU_TYPE == 9250
 void init_raw_mpu9250(uint8_t* frame) {
-  frame_create_debug(frame, '0', '0');
+  frame_create_debug(frame, 'A', '0');
   usart_write_frame(frame, 8);
 
   twi_init();
 
-  frame_create_debug(frame, '0', '1');
+  frame_create_debug(frame, 'B', '0');
   usart_write_frame(frame, 8);
 
-  mpu9250_setup();
-
-  frame_create_debug(frame, '0', '2');
-  usart_write_frame(frame, 8);
+  mpu9250_setup(frame);
 }
 
 void read_raw_mpu9250(uint8_t* frame) {
