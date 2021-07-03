@@ -83,35 +83,6 @@
          // proportional feedback, Ki for integral
 #define Ki 0.0f
 
-// Specify sensor full scale
-extern uint8_t Gscale;  // = GFS_250DPS;
-extern uint8_t Ascale;  // = AFS_2G;
-extern uint8_t Mscale;  // = MFS_16BITS; // Choose either 14-bit or 16-bit magnetometer resolution
-extern uint8_t
-    Mmode;  // = 0x02;        // 2 for 8 Hz, 6 for 100 Hz continuous magnetometer data read
-float aRes, gRes, mRes;  // scale resolutions per LSB for the sensors
-
-float temperature;  // Stores the real internal chip temperature in degrees Celsius
-float SelfTest[6];  // holds results of gyro and accelerometer self test
-
-extern float magBias[3];
-extern float magScale[3];
-
-extern float magCalibration[3];  // = {0, 0, 0}, magbias[3] = {0, 0, 0};  // Factory mag calibration
-                                 // and mag bias
-extern float gyroBias[3];        // = {0, 0, 0};
-extern float accelBias[3];       // = {0, 0, 0};      // Bias corrections for gyro and accelerometer
-int16_t tempCount;               // temperature raw count output
-
-extern float deltat;  // = 0;
-extern float sum;     //= 0;        // integration interval for both filter schemes
-
-extern float
-    beta;  //= 0.8660254 * GyroMeasError; //sqrt(3.0f / 4.0f) * GyroMeasError;   // compute beta
-extern float
-    zeta;  // = 0.8660254 * GyroMeasDrift; //sqrt(3.0f / 4.0f) * GyroMeasDrift;   // compute zeta,
-           // the other free parameter in the Madgwick scheme usually set to a small or zero value
-
 void mpu9250_setup(void);
 
 /*---------------------------------- Lokale Funktionen -----------------------------------------*/
@@ -127,7 +98,6 @@ void getMres(void);
 void getGres(void);
 void getAres(void);
 void readAccelData(int16_t* destination);
-void getMres(void);
 void readMagData(int16_t* destination);
 int16_t readTempData(void);
 void initAK8963(float* destination);

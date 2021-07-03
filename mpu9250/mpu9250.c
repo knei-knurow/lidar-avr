@@ -15,6 +15,14 @@ enum Mscale_values {
   MFS_16BITS       // 0.15 mG per LSB
 };
 
+// ***************************
+// Specify sensor full scale
+float aRes, gRes, mRes;  // scale resolutions per LSB for the sensors
+float temperature;       // Stores the real internal chip temperature in degrees Celsius
+float SelfTest[6];       // holds results of gyro and accelerometer self test
+int16_t tempCount;       // temperature raw count output
+// ***************************
+
 uint8_t Gscale = GFS_250DPS;
 uint8_t Ascale = AFS_2G;
 
@@ -877,8 +885,8 @@ void readBytes(uint8_t address, uint8_t subAddress, uint8_t byteCount, uint8_t* 
 #endif
   // while (Wire.available()) {
   // dest[i++] = Wire.read(); }         // Put read results in the Rx buffer <-- We don't need this
-  // because we let 					TWI Write directly into the memory region because
-  // we dont use a system buffer
+  // because we let 					TWI Write directly into the memory region
+  // because we dont use a system buffer
 
   // i2c_stop();	//Free the bus for other operations <- This happens automatically at the end
   // of twi_readFrom 		  				       because of the "true" as last
@@ -940,8 +948,8 @@ void readBytes_Debug(uint8_t address,
   }
   // while (Wire.available()) {
   // dest[i++] = Wire.read(); }         // Put read results in the Rx buffer <-- We don't need this
-  // because we let 					TWI Write directly into the memory region because
-  // we dont use a system buffer
+  // because we let 					TWI Write directly into the memory region
+  // because we dont use a system buffer
 
   // i2c_stop();	//Free the bus for other operations <- This happens automatically at the end
   // of twi_readFrom 		  				       because of the "true" as last
