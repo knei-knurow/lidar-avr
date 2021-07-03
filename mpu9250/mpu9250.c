@@ -176,7 +176,8 @@ int mpu9250_setup(uint8_t* frame) {
       UART_Printf(
           "AK8963 initialized for active data mode....\n\r");  // Initialize device for active mode
                                                                // read of magnetometer
-      getMres();
+      float _[3];
+      getMres(_);
       magcalMPU9250(magBias, magScale);
       frame_create_debug(frame, 'J', 0);
       usart_write_frame(frame, 8);
@@ -213,7 +214,7 @@ int mpu9250_setup(uint8_t* frame) {
 // data
 //===================================================================================================================
 
-void getMres() {
+void getMres(float* res) {
   switch (Mscale) {
       // Possible magnetometer scales (and their register bit settings) are:
       // 14 bit resolution (0) and 16 bit resolution (1)
@@ -224,9 +225,10 @@ void getMres() {
       mRes = 10. * 4912. / 32760.0;  // Proper scale to return milliGauss
       break;
   }
+  *res = mRes;
 }
 
-void getGres() {
+void getGres(float* res) {
   switch (Gscale) {
       // Possible gyro scales (and their register bit settings) are:
       // 250 DPS (00), 500 DPS (01), 1000 DPS (10), and 2000 DPS  (11).
@@ -244,9 +246,11 @@ void getGres() {
       gRes = 2000.0 / 32768.0;
       break;
   }
+
+  *res = gRes;
 }
 
-void getAres() {
+void getAres(float* res) {
   switch (Ascale) {
       // Possible accelerometer scales (and their register bit settings) are:
       // 2 Gs (00), 4 Gs (01), 8 Gs (10), and 16 Gs  (11).
@@ -264,6 +268,7 @@ void getAres() {
       aRes = 16.0 / 32768.0;
       break;
   }
+  *res = aRes;
 }
 
 void readAccelData(int16_t* destination) {
@@ -1033,4 +1038,21 @@ void magcalMPU9250(float* dest1, float* dest2) {
 
   UART_Printf("Mag Calibration done!");
 }
+
+void getAccelBias(float* x, float* y, float* z) {
+  *x = accelBias[0];
+  *y = accelBias[0];
+  *z = accelBias[0];
+}
+void getGyroBias(float* x, float* y, float* z) {
+  *x = gyroBias[0];
+  *y = gyroBias[0];
+  *z = gyroBias[0];
+}
+void getMagBias(float* x, float* y, float* z) {
+  *x = magBias[0];
+  *y = magBias[0];
+  *z = magBias[0];
+}
+
 /*----------------------------------------------------------------------------------------------*/

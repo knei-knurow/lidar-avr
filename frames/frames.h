@@ -21,4 +21,5 @@ acc_create_frame(uint8_t* buffer);
 
 #if MPU_TYPE == 9250
 void acc9dof_create_frame(uint8_t* buffer, int16_t* accel, int16_t* gyro, int16_t* mag);
+void acc9dof_create_frame_float(uint8_t* buffer, float* accel, float* gyro, float* mag);
 #endif  // MPU_TYPE == 6050

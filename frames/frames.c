@@ -109,4 +109,24 @@ void acc9dof_create_frame(uint8_t* buffer, int16_t* accel, int16_t* gyro, int16_
   buffer[22] = '#';
   buffer[23] = calculate_checksum(buffer, 23);
 }
+
+void acc9dof_create_frame_float(uint8_t* buffer, float* accel, float* gyro, float* mag) {
+  buffer[0] = 'L';
+  buffer[1] = 'F';
+  buffer[2] = 36;  // data part length
+  buffer[3] = '+';
+
+  float_to_bytes(buffer + 4, accel[0]);
+  float_to_bytes(buffer + 8, accel[1]);
+  float_to_bytes(buffer + 12, accel[2]);
+  float_to_bytes(buffer + 16, gyro[0]);
+  float_to_bytes(buffer + 20, gyro[1]);
+  float_to_bytes(buffer + 24, gyro[2]);
+  float_to_bytes(buffer + 28, mag[0]);
+  float_to_bytes(buffer + 32, mag[1]);
+  float_to_bytes(buffer + 36, mag[2]);
+
+  buffer[40] = '#';
+  buffer[41] = calculate_checksum(buffer, 41);
+}
 #endif  // MPU_TYPE == 9250

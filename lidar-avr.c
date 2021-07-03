@@ -64,17 +64,46 @@ void init_raw_mpu9250(uint8_t* frame) {
 }
 
 void read_raw_mpu9250(uint8_t* frame) {
+  // raw data
   int16_t accel[3];
   int16_t gyro[3];
   int16_t mag[3];
 
+  // scaled and biased data
+  float accelf[3];
+  float gyrof[3];
+  float magf[3];
+
+  // scales
+  float accel_scale, gyro_scale, mag_scale;
+  getAres(&accel_scale);
+  getGres(&gyro_scale);
+  getMres(&mag_scale);
+
+  // biases
+  float accel_bias[3], gyro_bias[3], mag_bias[3];
+  getAccelBias(accel_bias, accel_bias + 1, accel_bias + 2);
+  getGyroBias(gyro_bias, gyro_bias + 1, gyro_bias + 2);
+  getMagBias(mag_bias, mag_bias + 1, mag_bias + 2);
+
   if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {
     readAccelData(accel);
-    readGyroData(gyro);
-    readMagData(mag);
+    accelf[0] = (float)accel[0] * accel_scale + accel_bias[0];
+    accelf[1] = (float)accel[1] * accel_scale + accel_bias[1];
+    accelf[2] = (float)accel[2] * accel_scale + accel_bias[2];
 
-    acc9dof_create_frame(frame, accel, gyro, mag);
-    usart_write_frame(frame, 24);
+    readGyroData(gyro);
+    gyrof[0] = (float)gyro[0] * gyro_scale + gyro_bias[0];
+    gyrof[1] = (float)gyro[1] * gyro_scale + gyro_bias[1];
+    gyrof[2] = (float)gyro[2] * gyro_scale + gyro_bias[2];
+
+    readMagData(mag);
+    magf[0] = (float)mag[0] * mag_scale + mag_bias[0];
+    magf[1] = (float)mag[1] * mag_scale + mag_bias[1];
+    magf[2] = (float)mag[2] * mag_scale + mag_bias[2];
+
+    acc9dof_create_frame_float(frame, accelf, gyrof, magf);
+    usart_write_frame(frame, 42);
   }
 }
 #endif  // MPU_TYPE

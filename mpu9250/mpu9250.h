@@ -94,9 +94,9 @@ uint8_t readByte_Debug(uint8_t address, uint8_t subAddress);
 void readBytes_Debug(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t* dest);
 
 void magcalMPU9250(float* dest1, float* dest2);
-void getMres(void);
-void getGres(void);
-void getAres(void);
+void getMres(float* res);
+void getGres(float* res);
+void getAres(float* res);
 void readAccelData(int16_t* destination);
 void readMagData(int16_t* destination);
 int16_t readTempData(void);
@@ -115,6 +115,10 @@ void MadgwickQuaternionUpdate(float ax,
                               float my,
                               float mz,
                               float* quaternionBuffer);
+
+void getAccelBias(float* x, float* y, float* z);
+void getGyroBias(float* x, float* y, float* z);
+void getMagBias(float* x, float* y, float* z);
 /*----------------------------------------------------------------------------------------------*/
 
 #endif
