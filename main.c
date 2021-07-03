@@ -1,25 +1,28 @@
 /**
  * This program is a proxy between the rover's main computer
- * and the lidar servo.
+ * and the lidar servo and IMU.
  *
  * MCU: ATMega328 (Arduino Uno)
  */
-
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <util/delay.h>
-
-#include "mpu6050/mpu6050.h"
 #include "usart/usart.h"
+
+// select MPU (MPU-6050, MPU-9250)
+#define MPU_TYPE 9250
+#if MPU_TYPE == 6050
+#include "mpu6050/mpu6050.h"
+#elif MPU_TYPE == 9250
+#include "mpu9250/mpu9250.h"
+#include "mpu9250/twi.h"
+#endif
 
 #define MIN_DUTY 500  // is too low for testing purposed
 #define MAX_DUTY 5000
 #define START_DUTY ((MAX_DUTY - MIN_DUTY) / 2 + MIN_DUTY)
 
 #define FRAME_SERVO_LEN 8
-
-// Buffer for MPU6050 data processed by DMP
-extern uint8_t* mpu6050_fifoBuffer;
 
 // Converts float to 4 bytes
 void float_to_bytes(uint8_t* buffer, float v) {
@@ -42,10 +45,9 @@ uint8_t calculate_checksum(uint8_t* buffer, unsigned size) {
   return checksum;
 }
 
-// Creates a frame with latest data from the accelerometer and writes
+#if MPU_TYPE == 6050
+// Creates a frame with latest data from the accelerometer (6DoF) and writes
 // it to buffer.
-//
-// Buffer must be of length FRAME_LENGTH.
 void acc_create_frame(uint8_t* buffer) {
   buffer[0] = 'L';
   buffer[1] = 'D';
@@ -72,9 +74,9 @@ void acc_create_frame(uint8_t* buffer) {
   buffer[16] = '#';
   buffer[17] = calculate_checksum(buffer, 17);
 }
+#endif  // MPU_TYPE == 6050
 
-// Creates a frame with latest data from Digital Motion Processor and writes
-// it to the buffer.
+// Creates a frame with quaternion and writes it to the buffer.
 void acc_create_frame_quat(uint8_t* frame_buffer, float* qw, float* qx, float* qy, float* qz) {
   frame_buffer[0] = 'L';
   frame_buffer[1] = 'Q';
@@ -102,6 +104,7 @@ void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1) {
   frame_buffer[7] = calculate_checksum(frame_buffer, 7);
 }
 
+#if MPU_TYPE == 6050
 #if MPU6050_GETATTITUDE == 0
 // Initializes mpu6050 to grab raw data: accel X Y Z, gyro X Y Z
 void init_raw_mpu6050() {
@@ -148,7 +151,18 @@ void read_mahony_mpu6050(uint8_t* frame) {
 
   _delay_ms(10);  // TODO: Remove if possible
 }
-#endif
+#endif  // MPU6050_GETATTITUDE
+#endif  // MPU_TYPE
+
+#if MPU_TYPE == 9250
+void init_raw_mpu9250() {
+  twi_init();
+  mpu9250_setup();
+}
+
+void read_raw_mpu9250(uint8_t* frame) {}
+
+#endif  // MPU_TYPE
 
 int main(void) {
   // PWM
@@ -180,15 +194,20 @@ int main(void) {
   uint8_t frame[64];
 
 // Accelerometer MPU6050
+#if MPU_TYPE == 6050
 #if MPU6050_GETATTITUDE == 0
   init_raw_mpu6050();
 #elif MPU6050_GETATTITUDE == 1
   init_mahony_mpu6050();
 #elif MPU6050_GETATTITUDE == 2
   init_dmp_mpu6050(frame);
-#endif
+#endif  // MPU6050_GETATTITUDE
+#elif MPU_TYPE == 9250
+  init_raw_mpu9250();
+#endif  // MPU_TYPE
 
   while (1) {
+#if MPU_TYPE == 6050
     // Read MPU6050
 #if MPU6050_GETATTITUDE == 0
     read_raw_mpu6050(frame);  // requires about 10 ms
@@ -196,7 +215,10 @@ int main(void) {
     read_mahony_mpu6050(frame);
 #elif MPU6050_GETATTITUDE == 2
     read_dmp_mpu6050(frame);
-#endif
+#endif  // MPU6050_GETATTITUDE
+#elif MPU_TYPE == 9250
+    read_raw_mpu9250(frame);
+#endif  // MPU_TYPE
 
     // Update LED
     if (led_count++ % 20 == 0) {
@@ -235,15 +257,10 @@ ISR(USART_RX_vect) {
   if (frame_ready && crc == frame[FRAME_SERVO_LEN - 1]) {
     byte_number = 0;
     frame_ready = 0;
-
     uint16_t pwm = (frame[4] << 8) + frame[5];
-
-    // usart_write_byte(pwm / 100);
-
     if (pwm >= MIN_DUTY && pwm <= MAX_DUTY) {
       OCR1A = pwm;  // Set PWM TOP to received PWM duty
     }
-
     frame_ready = 0;
   }
 }
