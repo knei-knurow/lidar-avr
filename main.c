@@ -155,12 +155,64 @@ void read_mahony_mpu6050(uint8_t* frame) {
 #endif  // MPU_TYPE
 
 #if MPU_TYPE == 9250
-void init_raw_mpu9250() {
-  twi_init();
-  mpu9250_setup();
+void acc9dof_create_frame(uint8_t* buffer, int16_t* accel, int16_t* gyro, int16_t* mag) {
+  buffer[0] = 'L';
+  buffer[1] = 'M';
+  buffer[2] = 18;  // data part length
+  buffer[3] = '+';
+
+  buffer[4] = accel[0] >> 8;    // accel X (high)
+  buffer[5] = accel[0] & 0xff;  // accel X (low)
+  buffer[6] = accel[1] >> 8;    // accel Y (high)
+  buffer[7] = accel[1] & 0xff;  // accel Y (low)
+  buffer[8] = accel[2] >> 8;    // accel Z (high)
+  buffer[9] = accel[2] & 0xff;  // accel Z (low)
+  buffer[10] = gyro[0] >> 8;    // gyro X (high)
+  buffer[11] = gyro[0] & 0xff;  // gyro X (low)
+  buffer[12] = gyro[1] >> 8;    // gyro Y (high)
+  buffer[13] = gyro[1] & 0xff;  // gyro Y (low)
+  buffer[14] = gyro[2] >> 8;    // gyro Z (high)
+  buffer[15] = gyro[2] & 0xff;  // gyro Z (low)
+  buffer[16] = mag[0] >> 8;     // mag X (high)
+  buffer[17] = mag[0] & 0xff;   // mag X (low)
+  buffer[18] = mag[1] >> 8;     // mag Y (high)
+  buffer[19] = mag[1] & 0xff;   // mag Y (low)
+  buffer[20] = mag[2] >> 8;     // mag Z (high)
+  buffer[21] = mag[2] & 0xff;   // mag Z (low)
+
+  buffer[22] = '#';
+  buffer[23] = calculate_checksum(buffer, 23);
 }
 
-void read_raw_mpu9250(uint8_t* frame) {}
+void init_raw_mpu9250(uint8_t* frame) {
+  frame_create_debug(frame, 'A', 'A');
+  usart_write_frame(frame, 8);
+
+  twi_init();
+
+  frame_create_debug(frame, 'B', 'B');
+  usart_write_frame(frame, 8);
+
+  mpu9250_setup();
+
+  frame_create_debug(frame, 'C', 'C');
+  usart_write_frame(frame, 8);
+}
+
+void read_raw_mpu9250(uint8_t* frame) {
+  int16_t accel[3];
+  int16_t gyro[3];
+  int16_t mag[3];
+
+  if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {
+    readAccelData(accel);
+    readGyroData(gyro);
+    readMagData(mag);
+
+    acc9dof_create_frame(frame, accel, gyro, mag);
+    usart_write_frame(frame, 24);
+  }
+}
 
 #endif  // MPU_TYPE
 
@@ -203,7 +255,7 @@ int main(void) {
   init_dmp_mpu6050(frame);
 #endif  // MPU6050_GETATTITUDE
 #elif MPU_TYPE == 9250
-  init_raw_mpu9250();
+  init_raw_mpu9250(frame);
 #endif  // MPU_TYPE
 
   while (1) {
@@ -224,8 +276,6 @@ int main(void) {
     if (led_count++ % 20 == 0) {
       PORTB ^= (1 << PB5);
     }
-
-    _delay_ms(10);
   }
 }
 

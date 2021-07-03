@@ -46,19 +46,19 @@ float magCalibration[3] = {0, 0, 0},
 
 float magBias[3] = {0, 0, 0}, magScale[3] = {0, 0, 0};
 
-void mpu9250_setup() {
+int mpu9250_setup() {
   //  TWBR = 12;  // 400 kbit/sec I2C speed
   // Set up the interrupt pin, its set as active high, push-pull
   // int intPin = 12; -> PIN12 = Pin B4
   // pinMode(intPin, INPUT);
-  DDRB |= (1 << 4);
+  // DDRB |= (1 << 4);
   // digitalWrite(intPin, LOW);
-  PORTB &= ~(1 << 4);
+  // PORTB &= ~(1 << 4);
   // pinMode(myLed, OUTPUT);
   // int myLed = 13; -> Pin13 = Pin B5
-  DDRB |= (1 << 5);
+  // DDRB |= (1 << 5);
   // digitalWrite(myLed, HIGH);
-  PORTB |= (1 << 5);
+  // PORTB |= (1 << 5);
 
   UART_Printf("MPU9250\n\r");
   UART_Printf("9-DOF 16-bit\n\r");
