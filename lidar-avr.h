@@ -10,7 +10,7 @@
 #include "usart/usart.h"
 
 // select MPU (MPU-6050, MPU-9250)
-#define MPU_TYPE 9250
+#define MPU_TYPE 6050
 
 #if MPU_TYPE == 6050
 #include "mpu6050/mpu6050.h"

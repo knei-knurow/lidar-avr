@@ -16,7 +16,7 @@ void frame_create_debug(uint8_t* frame_buffer, uint8_t v0, uint8_t v1);
 #if MPU_TYPE == 6050
 // Creates a frame with latest data from the accelerometer (6DoF) and writes
 // it to buffer.
-acc_create_frame(uint8_t* buffer);
+void acc_create_frame(uint8_t* buffer);
 #endif  // MPU_TYPE == 6050
 
 #if MPU_TYPE == 9250
